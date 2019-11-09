@@ -8,16 +8,13 @@ import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
-import android.util.JsonReader;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.alexanderglueck.urlpusher.Constants;
 import com.alexanderglueck.urlpusher.MainActivity;
-import com.alexanderglueck.urlpusher.NotificationInfo;
 import com.alexanderglueck.urlpusher.R;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
@@ -40,10 +37,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      *
      * @param remoteMessage Object representing the message received from Firebase Cloud Messaging.
      */
-    // [START receive_message]
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
-        // [START_EXCLUDE]
         // There are two types of messages data messages and notification messages. Data messages
         // are handled
         // here in onMessageReceived whether the app is in the foreground or background. Data
@@ -57,12 +52,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // and data payloads are treated as notification messages. The Firebase console always
         // sends notification
         // messages. For more see: https://firebase.google.com/docs/cloud-messaging/concept-options
-        // [END_EXCLUDE]
 
-        // wird nur aufgerufen wenn die app aktiv offen is, was selten der fall is
-
-
-        // TODO(developer): Handle FCM messages here.
         // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
         Log.d(TAG, "From: " + remoteMessage.getFrom());
 
@@ -70,24 +60,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         if (remoteMessage.getData().size() > 0) {
             Log.d(TAG, "Message data payload: " + remoteMessage.getData());
             handleNow(remoteMessage.getData());
-
         }
 
         // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
             Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
         }
-
-        Log.d(TAG, "onmsgreceived nur bei FOREGROUND ONLY, dann dafür eigene notification schicken");
-
-        // Also if you intend on generating your own notifications as a result of a received FCM
-        // message, here is where that should be initiated. See sendNotification method below.
-
-
-        // ich sende keine notification weil die app eh schon geöffnet ist
-        // sendNotification(remoteMessage.getNotification().getBody());
     }
-    // [END receive_message]
 
     /**
      * Handle time allotted to BroadcastReceivers.
@@ -95,20 +74,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     private void handleNow(Map<String, String> data) {
         Log.d(TAG, "Short lived task is done.");
 
-        if (data.containsKey("wert")) {
+        if (data.containsKey(Constants.NOTIFICATION_URL_KEY)) {
             Intent i = new Intent(Intent.ACTION_VIEW);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            i.setData(Uri.parse(data.get("wert")));
+            i.setData(Uri.parse(data.get(Constants.NOTIFICATION_URL_KEY)));
             startActivity(i);
-
-            //  NotificationInfo notificationInfo = new NotificationInfo(data.get("wert"));
-
-            // Intent intent = new Intent();
-            //intent.setAction(Constants.NOTIFICATION_BROADCAST_RECEIVER_MESSAGE_RECEIVED);
-            //  intent.putExtra(Constants.PARAM_NOTIFICATION_INFO, notificationInfo );
-            // startActivity(intent);
-
-            //LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }
     }
 
@@ -122,6 +92,9 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      */
     private void sendRegistrationToServer(String token) {
         // TODO: Implement this method to send token to your app server.
+
+        // Send to server if the user is already logged in and we have a device_id to update.
+        // Keep on device until a user signs in and we can create a new device with this token or update an existing one.
     }
 
     /**
