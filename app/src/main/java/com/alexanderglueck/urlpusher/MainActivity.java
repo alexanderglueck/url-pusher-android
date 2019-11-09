@@ -2,7 +2,10 @@ package com.alexanderglueck.urlpusher;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,20 +16,29 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 
+import java.lang.ref.WeakReference;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+
+    private NotificationBroadcastReceiver mNotificationBroadcastReceiver = null;
+    private IntentFilter mIntentFilter = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        this.mNotificationBroadcastReceiver = new NotificationBroadcastReceiver(this);
+        this.mIntentFilter = new IntentFilter(Constants.ACTION_NOTIFICATION_RECEIVED);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Create channel to show notifications.
@@ -97,5 +109,38 @@ public class MainActivity extends AppCompatActivity {
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         i.setData(Uri.parse(url));
         startActivity(i);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(this.mNotificationBroadcastReceiver, this.mIntentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mNotificationBroadcastReceiver);
+        super.onPause();
+    }
+
+    private class NotificationBroadcastReceiver extends BroadcastReceiver {
+
+        WeakReference<MainActivity> mMainActivity;
+
+        public NotificationBroadcastReceiver(MainActivity mainActivity) {
+            this.mMainActivity = new WeakReference<>(mainActivity);
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            MainActivity mainActivity = mMainActivity.get();
+
+            if (mainActivity != null) {
+                Bundle extras = intent.getExtras();
+                if (extras != null && extras.containsKey(Constants.INTENT_EXTRA_URL)) {
+                    mainActivity.notificationClicked(extras.getString(Constants.INTENT_EXTRA_URL));
+                }
+            }
+        }
     }
 }

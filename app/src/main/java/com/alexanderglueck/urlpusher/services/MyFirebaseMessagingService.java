@@ -1,10 +1,10 @@
 package com.alexanderglueck.urlpusher.services;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.alexanderglueck.urlpusher.Constants;
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -49,10 +49,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      */
     private void handleMessage(Map<String, String> data) {
         if (data.containsKey(Constants.NOTIFICATION_URL_KEY)) {
-            Intent i = new Intent(Intent.ACTION_VIEW);
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            i.setData(Uri.parse(data.get(Constants.NOTIFICATION_URL_KEY)));
-            startActivity(i);
+            Intent intent = new Intent();
+            intent.setAction(Constants.ACTION_NOTIFICATION_RECEIVED);
+            intent.putExtra(Constants.INTENT_EXTRA_URL, data.get(Constants.NOTIFICATION_URL_KEY));
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }
     }
 
