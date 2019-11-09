@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">URL-Pusher</string>
+    <string name="default_notification_channel_id" translatable="false">fcm_default_channel</string>
+    <string name="msg_token_fmt" translatable="false">InstanceID Token: %s</string>
+    <string name="log_token">Log Token</string>
+    <string name="new_incoming_link">New incoming link</string>
+    <string name="default_notification_channel_name">General</string>
+</resources>
