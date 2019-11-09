@@ -33,7 +33,9 @@ public class MainActivity extends AppCompatActivity {
             String channelId = getString(R.string.default_notification_channel_id);
             String channelName = getString(R.string.default_notification_channel_name);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT));
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT));
+            }
         }
 
         // If a notification message is tapped, any data accompanying the notification
@@ -68,13 +70,19 @@ public class MainActivity extends AppCompatActivity {
                             return;
                         }
 
-                        // Get new Instance ID token
-                        String token = task.getResult().getToken();
+                        InstanceIdResult result = task.getResult();
 
-                        // Log and toast
-                        String msg = getString(R.string.msg_token_fmt, token);
-                        Log.d(TAG, msg);
-                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        if (result != null) {
+                            // Get new Instance ID token
+                            String token = result.getToken();
+
+                            // Log and toast
+                            String msg = getString(R.string.msg_token_fmt, token);
+                            Log.d(TAG, msg);
+                            Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(MainActivity.this, R.string.no_token, Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
             }

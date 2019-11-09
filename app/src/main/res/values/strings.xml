@@ -5,4 +5,5 @@
     <string name="log_token">Log Token</string>
     <string name="new_incoming_link">New incoming link</string>
     <string name="default_notification_channel_name">General</string>
+    <string name="no_token">No token</string>
 </resources>
