@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -28,6 +29,8 @@ import java.lang.ref.WeakReference;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+
+    private SessionHandler session;
 
     private NotificationBroadcastReceiver mNotificationBroadcastReceiver = null;
     private IntentFilter mIntentFilter = null;
@@ -97,6 +100,25 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
+            }
+        });
+
+        session = new SessionHandler(getApplicationContext());
+        User user = session.getUserDetails();
+        TextView welcomeText = findViewById(R.id.welcomeText);
+
+        welcomeText.setText("Welcome " + user.getFullName());
+
+        Button logoutBtn = findViewById(R.id.btnLogout);
+
+        logoutBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                session.logoutUser();
+                Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                startActivity(i);
+                finish();
+
             }
         });
     }
