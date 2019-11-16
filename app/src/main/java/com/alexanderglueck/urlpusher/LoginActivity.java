@@ -32,7 +32,7 @@ public class LoginActivity extends AppCompatActivity {
     private String username;
     private String password;
     private ProgressDialog pDialog;
-    private String login_url = "http://10.74.79.12:8080/api/session";
+    private String login_url = "http://10.0.0.10:8080/api/session";
     private SessionHandler session;
 
 
