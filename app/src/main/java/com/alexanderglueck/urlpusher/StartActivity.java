@@ -1,19 +1,18 @@
 package com.alexanderglueck.urlpusher;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 
 public class StartActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "StartActivity";
 
 
     @Override
@@ -30,45 +29,48 @@ public class StartActivity extends AppCompatActivity {
             }
         }
 
-
-        if (getIntent().getExtras() != null) {
-            for (String key : getIntent().getExtras().keySet()) {
-                Object value = getIntent().getExtras().get(key);
-                Log.d(TAG, "Key: " + key + " Value: " + value);
-
-                if (key.equals(Constants.NOTIFICATION_URL_KEY)) {
-                    notificationClicked(getIntent().getExtras().getString(key));
-                }
-            }
-
-           
-        } else {
-
-
-            checkLogin();
-        }
-    }
-
-    private void notificationClicked(String url) {
-        Log.d(TAG, "Notification clicked");
-        Log.d(TAG, "URL: " + url);
-
-        Intent i = new Intent(Intent.ACTION_VIEW);
-        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        i.setData(Uri.parse(url));
-        startActivity(i);
-        finish();
+        checkLogin();
     }
 
     private void checkLogin() {
-        PreferencesHelper preferencesHelper = new PreferencesHelper(this);
+        SessionHandler preferencesHelper = new SessionHandler(getApplicationContext());
         Intent activityIntent;
 
-        if (preferencesHelper.hasApiToken()) {
+        if (preferencesHelper.isLoggedIn()) {
+            Log.d(TAG, "in start, eingeloggt");
+
             activityIntent = new Intent(this, MainActivity.class);
+
+            if (getIntent().getExtras() != null) {
+
+                Log.d(TAG, "hat extras");
+
+                for (String key : getIntent().getExtras().keySet()) {
+                    Object value = getIntent().getExtras().get(key);
+                    Log.d(TAG, "Key: " + key + " Value: " + value);
+
+                    if (key.equals(Constants.INTENT_EXTRA_NOTIFICATION)) {
+                        // notification received
+                        // keep extras for main activity
+
+                        // resend it to main activity
+                        activityIntent.putExtra(Constants.INTENT_EXTRA_NOTIFICATION, getIntent().getExtras().getSerializable(Constants.INTENT_EXTRA_NOTIFICATION));
+                    }
+                }
+            } else {
+                Log.d(TAG, "hat keine extras ");
+            }
+
         } else {
+            Log.d(TAG, "in start, nicht eingeloggt");
+            if (getIntent().getExtras() != null) {
+                Log.d(TAG, "nicht eingeloggt aber notification clicked, derzeit discarded. nicht sagbar ob offen oder zu received");
+
+
+            }
             activityIntent = new Intent(this, LoginActivity.class);
         }
+
 
         startActivity(activityIntent);
         finish();

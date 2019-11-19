@@ -9,6 +9,7 @@ public class SessionHandler {
     private static final String KEY_FULL_NAME = "full_name";
     private static final String KEY_API_TOKEN = "api_token";
     private static final String KEY_EMPTY = "";
+    private static final String KEY_ID = "id";
     private Context mContext;
     private SharedPreferences.Editor mEditor;
     private SharedPreferences mPreferences;
@@ -25,7 +26,8 @@ public class SessionHandler {
      * @param username
      * @param fullName
      */
-    public void loginUser(String username, String fullName, String apiToken) {
+    public void loginUser(int id, String username, String fullName, String apiToken) {
+        mEditor.putInt(KEY_ID, id);
         mEditor.putString(KEY_USERNAME, username);
         mEditor.putString(KEY_FULL_NAME, fullName);
         mEditor.putString(KEY_API_TOKEN, apiToken);
@@ -55,6 +57,7 @@ public class SessionHandler {
         user.setUsername(mPreferences.getString(KEY_USERNAME, KEY_EMPTY));
         user.setFullName(mPreferences.getString(KEY_FULL_NAME, KEY_EMPTY));
         user.setApiToken(mPreferences.getString(KEY_API_TOKEN, KEY_EMPTY));
+        user.setId(mPreferences.getInt(KEY_ID, 0));
 
         return user;
     }

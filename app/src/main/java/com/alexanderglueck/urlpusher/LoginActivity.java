@@ -22,6 +22,7 @@ import org.json.JSONObject;
 
 public class LoginActivity extends AppCompatActivity {
     private static final String KEY_STATUS = "status";
+    private static final String TAG = "LoginActivity";
     private static final String KEY_MESSAGE = "message";
     private static final String KEY_FULL_NAME = "full_name";
     private static final String KEY_USERNAME = "email";
@@ -79,7 +80,32 @@ public class LoginActivity extends AppCompatActivity {
      * Launch Dashboard Activity on Successful Login
      */
     private void loadDashboard() {
+
         Intent i = new Intent(getApplicationContext(), MainActivity.class);
+
+        if (getIntent().getExtras() != null) {
+
+            Log.d(TAG, "per extra erhalten, dh von zu ");
+
+
+            for (String key : getIntent().getExtras().keySet()) {
+                Object value = getIntent().getExtras().get(key);
+                Log.d(TAG, "Key: " + key + " Value: " + value);
+
+                if (key.equals(Constants.INTENT_EXTRA_NOTIFICATION)) {
+                    // notification received from start
+                    //
+
+                    Notification notification = (Notification) getIntent().getExtras().getSerializable(Constants.INTENT_EXTRA_NOTIFICATION);
+
+                    if (notification != null) {
+                        i.putExtra(Constants.INTENT_EXTRA_NOTIFICATION, notification);
+                    }
+                }
+            }
+        }
+
+
         startActivity(i);
         finish();
 
@@ -117,9 +143,9 @@ public class LoginActivity extends AppCompatActivity {
                         try {
                             //Check if user got logged in successfully
 
-                            Log.d("TSDF", response.toString());
+                            Log.d(TAG, response.toString());
                             if (response.getInt("id") > 0) {
-                                session.loginUser(username, response.getString("name"), response.getString("api_token"));
+                                session.loginUser(response.getInt("id"), username, response.getString("name"), response.getString("api_token"));
                                 loadDashboard();
 
                             } else {

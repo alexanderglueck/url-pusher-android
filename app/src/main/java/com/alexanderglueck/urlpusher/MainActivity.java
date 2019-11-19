@@ -1,13 +1,10 @@
 package com.alexanderglueck.urlpusher;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -78,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
         User user = session.getUserDetails();
         TextView welcomeText = findViewById(R.id.welcomeText);
 
-        welcomeText.setText("Welcome " + user.getFullName());
+        welcomeText.setText("Welcome " + user.getFullName() + " (" + user.getId() + ")");
 
         Button logoutBtn = findViewById(R.id.btnLogout);
 
@@ -92,6 +89,33 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+
+        if (getIntent().getExtras() != null) {
+
+            Log.d(TAG, "per extra erhalten, dh von zu ");
+
+
+            for (String key : getIntent().getExtras().keySet()) {
+                Object value = getIntent().getExtras().get(key);
+                Log.d(TAG, "Key: " + key + " Value: " + value);
+
+                if (key.equals(Constants.INTENT_EXTRA_NOTIFICATION)) {
+                    // notification received from start
+                    //
+
+                    Notification notification = (Notification) getIntent().getExtras().getSerializable(Constants.INTENT_EXTRA_NOTIFICATION);
+                    if (notification != null) {
+                        if (notification.getUserId() == session.getUserDetails().getId()) {
+                            // could have clicked notification because was signed out and signed in with different user
+                            // then user that sent the notification
+                            Log.d(TAG, "extra: notificaiton user" + notification.getUserId() + " / session user" + session.getUserDetails().getId());
+                            notificationClicked(notification.getUrl());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void notificationClicked(String url) {
@@ -128,10 +152,26 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             MainActivity mainActivity = mMainActivity.get();
 
+            Log.d(TAG, "per receiver erhalten, dh eingeloggt und offen");
+
             if (mainActivity != null) {
                 Bundle extras = intent.getExtras();
-                if (extras != null && extras.containsKey(Constants.INTENT_EXTRA_URL)) {
-                    mainActivity.notificationClicked(extras.getString(Constants.INTENT_EXTRA_URL));
+                if (extras != null && extras.containsKey(Constants.INTENT_EXTRA_NOTIFICATION)) {
+
+                    Notification notification = (Notification) extras.getSerializable(Constants.INTENT_EXTRA_NOTIFICATION);
+
+                    if (notification != null) {
+                        if (notification.getUserId() == session.getUserDetails().getId()) {
+                            // could have clicked notification because was signed out and signed in with different user
+                            // then user that sent the notification
+                            // here in the listener we should always be signed in with the correct user
+                            // however, if app open, and somehow old token still valid with new user, check anyway
+
+                            Log.d(TAG, "receiver: notificaiton user" + notification.getUserId() + " / session user" + session.getUserDetails().getId());
+
+                            mainActivity.notificationClicked(notification.getUrl());
+                        }
+                    }
                 }
             }
         }

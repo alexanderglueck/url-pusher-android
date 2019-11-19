@@ -1,5 +1,6 @@
 package com.alexanderglueck.urlpusher.services;
 
+import android.app.ActivityManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -16,11 +17,15 @@ import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.alexanderglueck.urlpusher.Constants;
+import com.alexanderglueck.urlpusher.LoginActivity;
 import com.alexanderglueck.urlpusher.MainActivity;
+import com.alexanderglueck.urlpusher.Notification;
 import com.alexanderglueck.urlpusher.R;
+import com.alexanderglueck.urlpusher.SessionHandler;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import java.util.List;
 import java.util.Map;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
@@ -60,11 +65,84 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      */
     private void handleMessage(Map<String, String> data) {
         if (data.containsKey(Constants.NOTIFICATION_URL_KEY)) {
-            Intent intent = new Intent();
-            intent.setAction(Constants.ACTION_NOTIFICATION_RECEIVED);
-            intent.putExtra(Constants.INTENT_EXTRA_URL, data.get(Constants.NOTIFICATION_URL_KEY));
-            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+            SessionHandler helper = new SessionHandler(getApplicationContext());
+
+            Notification notification = new Notification();
+            notification.setTitle(data.get(Constants.NOTIFICATION_URL_KEY));
+            notification.setUrl(data.get(Constants.NOTIFICATION_URL_KEY));
+            notification.setUserId(Integer.parseInt("" + data.get(Constants.NOTIFICATION_USER_ID_KEY)));
+
+            String title;
+
+            if (helper.isLoggedIn()) {
+                if (notification.getUserId() != helper.getUserDetails().getId()) {
+                    // do not process notification for another user. dont even show notification
+                    return;
+                }
+                // logged in, url can be shown
+                // and logged in user is notification recipient
+                Intent intent = new Intent();
+                intent.setAction(Constants.ACTION_NOTIFICATION_RECEIVED);
+                intent.putExtra(Constants.INTENT_EXTRA_NOTIFICATION, notification);
+                //LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+
+                title = data.get(Constants.NOTIFICATION_URL_KEY);
+
+                if (applicationInForeground()) {
+                    // eingeloggt und offen
+                    Log.d(TAG, "eingeloggt und offen");
+
+                    LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+                } else {
+                    Log.d(TAG, "eingeloggt und zu");
+
+                    // eingeloggt und zu
+                    sendNotification(getString(R.string.app_name), title, notification, true);
+                }
+
+            } else {
+                title = "Sign in to access pushed URL";
+                // not logged in, hide url
+                notification.setTitle(title);
+
+                Intent intent = new Intent();
+                intent.setAction(Constants.ACTION_NOTIFICATION_RECEIVED);
+                intent.putExtra(Constants.INTENT_EXTRA_NOTIFICATION, notification);
+                // LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+
+
+                if (applicationInForeground()) {
+                    // nicht eingeloggt und offen
+                    // kann nur sein wenn in login oder register maske
+                    // wenn jetzt eine notification reinkommt machen wir trotzdem eine notification
+                    Log.d(TAG, "ausgeloggt und offen");
+
+                    sendNotification(getString(R.string.new_incoming_link), title, notification, false);
+
+                } else {
+                    Log.d(TAG, "ausgeloggt und zu");
+
+                    // nicht eingeloggt und zu
+                    sendNotification(getString(R.string.new_incoming_link), title, notification, false);
+                }
+            }
+
+
         }
+    }
+
+    private boolean applicationInForeground() {
+        boolean isActivityFound = false;
+
+        ActivityManager activityManager2 = (ActivityManager) getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager2.getRunningAppProcesses();
+        for (ActivityManager.RunningAppProcessInfo appProcess : appProcesses) {
+            if (appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                isActivityFound = true;
+            }
+        }
+
+        return isActivityFound;
     }
 
     /**
@@ -84,8 +162,16 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      *
      * @param messageBody FCM message body received.
      */
-    private void sendNotification(String messageTitle, String messageBody) {
-        Intent intent = new Intent(this, MainActivity.class);
+    private void sendNotification(String messageTitle, String messageBody, Notification notification, boolean signedIn) {
+        Intent intent;
+
+        if (signedIn) {
+            intent = new Intent(this, MainActivity.class);
+        } else {
+            intent = new Intent(this, LoginActivity.class);
+        }
+
+        intent.putExtra(Constants.INTENT_EXTRA_NOTIFICATION, notification);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);
@@ -108,7 +194,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // Since android Oreo notification channel is needed.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(channelId,
-                    "Channel human readable title",
+                    getString(R.string.default_notification_channel_name),
                     NotificationManager.IMPORTANCE_DEFAULT);
             notificationManager.createNotificationChannel(channel);
         }

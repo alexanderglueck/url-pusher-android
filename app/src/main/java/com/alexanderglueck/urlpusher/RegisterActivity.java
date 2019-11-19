@@ -119,9 +119,9 @@ public class RegisterActivity extends AppCompatActivity {
                         pDialog.dismiss();
                         try {
                             //Check if user got registered successfully
-                            if (response.getInt("id") == 0) {
+                            if (response.getInt("id") > 0) {
                                 //Set the user session
-                                session.loginUser(username, fullName, response.getString("api_token"));
+                                session.loginUser(response.getInt("id"), username, fullName, response.getString("api_token"));
                                 loadDashboard();
 
                             } else if (response.getInt(KEY_STATUS) == 1) {

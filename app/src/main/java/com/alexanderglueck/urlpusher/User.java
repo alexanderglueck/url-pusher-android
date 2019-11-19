@@ -4,6 +4,7 @@ public class User {
     String username;
     String fullName;
     String apiToken;
+    int id;
 
     public void setUsername(String username) {
         this.username = username;
@@ -15,6 +16,14 @@ public class User {
 
     public void setApiToken(String apiToken) {
         this.apiToken = apiToken;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getApiToken() {
