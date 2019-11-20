@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -155,6 +156,17 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         //  Keep on device until a user signs in and we can create a new device with this token or update an existing one.
 
         Log.d(TAG, "Refreshed token: " + token);
+
+        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(Constants.SHARED_PREFERENCES_FILE, MODE_PRIVATE);
+
+        sharedPreferences.edit().putString(Constants.FCM_TOKEN, token).commit();
+
+        SessionHandler helper = new SessionHandler(getApplicationContext());
+
+        if (helper.isLoggedIn()) {
+            // update current connected device with new token
+            // update device on server
+        }
     }
 
     /**
