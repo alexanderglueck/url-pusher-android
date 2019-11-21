@@ -10,23 +10,20 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -261,12 +258,13 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         JsonObjectRequest jsArrayRequest = new JsonObjectRequest
-                (Request.Method.DELETE, token_destroy_url, request, new Response.Listener<JSONObject>() {
+                (Request.Method.POST, token_destroy_url, request, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
 
                         //Check if user got logged in successfully
                         Log.d(TAG, response.toString());
+                        Log.d(TAG, "should have deleted token");
 
                     }
                 }, new Response.ErrorListener() {
@@ -275,6 +273,14 @@ public class LoginActivity extends AppCompatActivity {
                     public void onErrorResponse(VolleyError error) {
 
                         Log.d("TSDFEERROR", "" + error.getMessage() + error.getLocalizedMessage() + error.toString());
+
+                        NetworkResponse response  = error.networkResponse;
+                        String temp = "";
+                        if(response != null && response.data != null){
+                            temp = new String(response.data, StandardCharsets.UTF_8);
+                        }
+
+                        Log.d("TSDFEERROR2", "" + temp);
                         //Display error message whenever an error occurs
                         Toast.makeText(getApplicationContext(),
                                 error.getMessage(), Toast.LENGTH_SHORT).show();
@@ -285,7 +291,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> params = new HashMap<String, String>();
-                params.put("Authentication", "Bearer " + session.getUserDetails().getApiToken());
+                params.put("Authorization", "Bearer " + session.getUserDetails().getApiToken());
                 return params;
             }
         };
