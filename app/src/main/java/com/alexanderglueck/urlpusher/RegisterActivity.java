@@ -34,7 +34,7 @@ public class RegisterActivity extends AppCompatActivity {
     private String confirmPassword;
     private String fullName;
     private ProgressDialog pDialog;
-    private String register_url = "http://10.0.0.10:8080/api/user";
+
     private SessionHandler session;
 
     @Override
@@ -113,7 +113,7 @@ public class RegisterActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         JsonObjectRequest jsArrayRequest = new JsonObjectRequest
-                (Request.Method.POST, register_url, request, new Response.Listener<JSONObject>() {
+                (Request.Method.POST, Constants.URL_REGISTER, request, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         pDialog.dismiss();

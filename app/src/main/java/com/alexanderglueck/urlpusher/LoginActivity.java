@@ -40,8 +40,6 @@ public class LoginActivity extends AppCompatActivity {
     private String username;
     private String password;
     private ProgressDialog pDialog;
-    private String login_url = "http://10.0.0.10:8080/api/session";
-    private String token_destroy_url = "http://10.0.0.10:8080/api/remove-token";
     private SessionHandler session;
 
 
@@ -144,7 +142,7 @@ public class LoginActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         JsonObjectRequest jsArrayRequest = new JsonObjectRequest
-                (Request.Method.POST, login_url, request, new Response.Listener<JSONObject>() {
+                (Request.Method.POST, Constants.URL_LOGIN, request, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         pDialog.dismiss();
@@ -258,7 +256,7 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         JsonObjectRequest jsArrayRequest = new JsonObjectRequest
-                (Request.Method.POST, token_destroy_url, request, new Response.Listener<JSONObject>() {
+                (Request.Method.POST, Constants.URL_DESTROY_TOKEN, request, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
 
@@ -274,9 +272,9 @@ public class LoginActivity extends AppCompatActivity {
 
                         Log.d("TSDFEERROR", "" + error.getMessage() + error.getLocalizedMessage() + error.toString());
 
-                        NetworkResponse response  = error.networkResponse;
+                        NetworkResponse response = error.networkResponse;
                         String temp = "";
-                        if(response != null && response.data != null){
+                        if (response != null && response.data != null) {
                             temp = new String(response.data, StandardCharsets.UTF_8);
                         }
 

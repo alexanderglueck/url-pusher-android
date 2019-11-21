@@ -14,4 +14,9 @@ public class Constants {
 
     public static final String LAST_SIGNED_IN_USER_ID = "last_user_id";
     public static final String LAST_SIGNED_IN_DEVICE_ID = "last_device_id";
+
+    public static final String URL_LOGIN = "http://10.0.0.10:8080/api/session";
+    public static final String URL_DESTROY_TOKEN = "http://10.0.0.10:8080/api/remove-token";
+    public static final String URL_REGISTER = "http://10.0.0.10:8080/api/user";
+    public static final String URL_FETCH_DEVICES = "http://10.0.0.10:8080/api/devices";
 }
