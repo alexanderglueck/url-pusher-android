@@ -12,8 +12,9 @@ import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.JsonArrayRequest;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
@@ -37,16 +38,27 @@ public class SelectDeviceActivity extends AppCompatActivity {
     }
 
     private void getDevices() {
-        JSONObject request = new JSONObject();
+        final JSONArray request = new JSONArray();
 
-        JsonObjectRequest jsArrayRequest = new JsonObjectRequest
-                (Request.Method.GET, Constants.URL_FETCH_DEVICES, request, new Response.Listener<JSONObject>() {
+        JsonArrayRequest jsArrayRequest = new JsonArrayRequest
+                (Request.Method.GET, Constants.URL_FETCH_DEVICES, request, new Response.Listener<JSONArray>() {
                     @Override
-                    public void onResponse(JSONObject response) {
+                    public void onResponse(JSONArray response) {
 
                         //Check if user got logged in successfully
                         Log.d(TAG, response.toString());
                         Log.d(TAG, "should have deleted token");
+
+                        try {
+                            for (int i = 0; i < response.length(); i++) {
+                                JSONObject jsonData = response.getJSONObject(i);
+                                Log.d(TAG, jsonData.getString("name"));
+                                Log.d(TAG, jsonData.getString("device_token"));
+                                Log.d(TAG, "" + jsonData.getInt("id"));
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
 
                     }
                 }, new Response.ErrorListener() {

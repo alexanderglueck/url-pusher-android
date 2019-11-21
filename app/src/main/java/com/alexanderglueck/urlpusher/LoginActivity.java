@@ -164,6 +164,9 @@ public class LoginActivity extends AppCompatActivity {
                                     // die jetzt eingeloggte id als zuletzte wegspeichern
                                     sharedPreferences.edit().putInt(Constants.LAST_SIGNED_IN_USER_ID, userId).commit();
 
+                                    // reset last used device id, because new user
+                                    sharedPreferences.edit().putInt(Constants.LAST_SIGNED_IN_DEVICE_ID, 0).commit();
+
                                     // weil ein anderer user eingeloggt, alten token ungültig machen, sonst erhält er pushes vom anderen
                                     String token = sharedPreferences.getString(Constants.FCM_TOKEN, "");
                                     if (!token.equals("")) {
@@ -196,6 +199,8 @@ public class LoginActivity extends AppCompatActivity {
                                     // if the device id no longer exists,
                                     // open device chooser
                                     // save selected device id
+
+                                    openDeviceSelection = true;
                                 }
 
                                 session.loginUser(response.getInt("id"), username, response.getString("name"), response.getString("api_token"));

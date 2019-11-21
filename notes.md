@@ -6,8 +6,8 @@
    b) if the user is NOT signed in, open login, and upon successful login with the same userid as the notification was sent out to, open
       (else discard because wrong user post login)
 
-3. Upon login check if the signing in user was the last signed in user. if not call deleteToken on the FirebaseInstanceId.
-  a) if another user signes in he gets a new id
+3. Upon login check if the signing in user was the last signed in user. if not remove token from linked device.
+  a) if another user signes in he has the same id but removes it from the old users device
      check if the user was signed in before and whether his last used device token still matches one
      of his current devices. auto choose.
      else show chooser and create
