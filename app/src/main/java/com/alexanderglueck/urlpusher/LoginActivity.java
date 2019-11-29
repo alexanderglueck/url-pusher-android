@@ -8,24 +8,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.DefaultRetryPolicy;
-import com.android.volley.NetworkResponse;
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
+import com.alexanderglueck.urlpusher.responses.RemoveTokenResponse;
+import com.alexanderglueck.urlpusher.responses.SessionResponse;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import retrofit2.Call;
+import retrofit2.Callback;
 
 public class LoginActivity extends AppCompatActivity {
     private static final String KEY_STATUS = "status";
@@ -41,6 +31,7 @@ public class LoginActivity extends AppCompatActivity {
     private String password;
     private ProgressDialog pDialog;
     private SessionHandler session;
+    private SessionResponse sessionResponse;
 
 
     @Override
@@ -56,18 +47,9 @@ public class LoginActivity extends AppCompatActivity {
         etUsername = findViewById(R.id.username);
         etPassword = findViewById(R.id.password);
 
-        Button register = findViewById(R.id.register);
         Button login = findViewById(R.id.login);
 
         //Launch Registration screen when Register Button is clicked
-        register.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(LoginActivity.this, RegisterActivity.class);
-                startActivity(i);
-                finish();
-            }
-        });
 
         login.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -132,113 +114,83 @@ public class LoginActivity extends AppCompatActivity {
 
     private void login() {
         displayLoader();
-        JSONObject request = new JSONObject();
-        try {
-            //Populate the request parameters
-            request.put(KEY_USERNAME, username);
-            request.put(KEY_PASSWORD, password);
 
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        JsonObjectRequest jsArrayRequest = new JsonObjectRequest
-                (Request.Method.POST, Constants.URL_LOGIN, request, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        pDialog.dismiss();
-                        boolean openDeviceSelection = false;
-                        try {
-                            //Check if user got logged in successfully
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<SessionResponse> call = apiService.login(username, password);
+        call.enqueue(new Callback<SessionResponse>() {
+            @Override
+            public void onResponse(Call<SessionResponse> call, retrofit2.Response<SessionResponse> response) {
+                sessionResponse = response.body();
+                Log.d("TAG", "Response = " + sessionResponse.getName() + sessionResponse.getId() + sessionResponse.getApiToken());
 
-                            Log.d(TAG, response.toString());
-                            if (response.getInt("id") > 0) {
+                boolean openDeviceSelection = false;
+                SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(Constants.SHARED_PREFERENCES_FILE, MODE_PRIVATE);
 
-                                int userId = response.getInt("id");
-                                SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(Constants.SHARED_PREFERENCES_FILE, MODE_PRIVATE);
+                if (sessionResponse.getId() != sharedPreferences.getInt(Constants.LAST_SIGNED_IN_USER_ID, 0)) {
+                    Log.d(TAG, "anderer user");
 
-                                if (userId != sharedPreferences.getInt(Constants.LAST_SIGNED_IN_USER_ID, 0)) {
-                                    Log.d(TAG, "anderer user");
+                    // anderer user hat sich eingeloggt als zuvor
 
-                                    // anderer user hat sich eingeloggt als zuvor
+                    // die jetzt eingeloggte id als zuletzte wegspeichern
+                    sharedPreferences.edit().putInt(Constants.LAST_SIGNED_IN_USER_ID, sessionResponse.getId()).commit();
 
-                                    // die jetzt eingeloggte id als zuletzte wegspeichern
-                                    sharedPreferences.edit().putInt(Constants.LAST_SIGNED_IN_USER_ID, userId).commit();
+                    // reset last used device id, because new user
+                    sharedPreferences.edit().putInt(Constants.LAST_SIGNED_IN_DEVICE_ID, 0).commit();
 
-                                    // reset last used device id, because new user
-                                    sharedPreferences.edit().putInt(Constants.LAST_SIGNED_IN_DEVICE_ID, 0).commit();
-
-                                    // weil ein anderer user eingeloggt, alten token ungültig machen, sonst erhält er pushes vom anderen
-                                    String token = sharedPreferences.getString(Constants.FCM_TOKEN, "");
-                                    if (!token.equals("")) {
-                                        deleteToken(token);
-                                    }
-
-
-                                    // weil neuer user auch device selection öffnen
-                                    // last used device id leeren to not reconnect with wrong
-                                    sharedPreferences.edit().putInt(Constants.LAST_SIGNED_IN_DEVICE_ID, 0).commit();
-
-                                    openDeviceSelection = true;
-
-                                } else {
-                                    Log.d(TAG, "gleicher user");
-                                    // gleicher user hat nach login sich wieder eingeloggt
-
-                                    // get list of devices
-                                    // if last saved device id still exists
-                                    // check if tokens match up, if same token
-                                    // reselect this device. we are still set up
-
-
-                                    // if last saved device id still exists
-                                    // check if tokens match up, if different token,
-                                    // expect the tolken to have changed
-                                    // update the device token and push to server
-                                    // a device token change should almost never happen
-
-                                    // if the device id no longer exists,
-                                    // open device chooser
-                                    // save selected device id
-
-                                    openDeviceSelection = true;
-                                }
-
-                                session.loginUser(response.getInt("id"), username, response.getString("name"), response.getString("api_token"));
-
-                                if (openDeviceSelection) {
-                                    openDeviceSelectionActivity();
-                                } else {
-                                    loadDashboard();
-                                }
-                            } else {
-                                Toast.makeText(getApplicationContext(),
-                                        response.getString(KEY_MESSAGE), Toast.LENGTH_SHORT).show();
-
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+                    // weil ein anderer user eingeloggt, alten token ungültig machen, sonst erhält er pushes vom anderen
+                    String token = sharedPreferences.getString(Constants.FCM_TOKEN, "");
+                    if (!token.equals("")) {
+                        deleteToken(token);
                     }
-                }, new Response.ErrorListener() {
 
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        pDialog.dismiss();
-                        Log.d("TSDFEERROR", "" + error.getMessage() + error.getLocalizedMessage() + error.toString());
-                        //Display error message whenever an error occurs
-                        Toast.makeText(getApplicationContext(),
-                                error.getMessage(), Toast.LENGTH_SHORT).show();
 
-                    }
-                });
+                    // weil neuer user auch device selection öffnen
+                    // last used device id leeren to not reconnect with wrong
+                    sharedPreferences.edit().putInt(Constants.LAST_SIGNED_IN_DEVICE_ID, 0).commit();
 
-        jsArrayRequest.setRetryPolicy(new DefaultRetryPolicy(
-                15 * 1000,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+                    openDeviceSelection = true;
 
-        // Access the RequestQueue through your singleton class.
-        MySingleton.getInstance(this).addToRequestQueue(jsArrayRequest);
+                } else {
+                    Log.d(TAG, "gleicher user");
+                    // gleicher user hat nach login sich wieder eingeloggt
+
+                    // get list of devices
+                    // if last saved device id still exists
+                    // check if tokens match up, if same token
+                    // reselect this device. we are still set up
+
+
+                    // if last saved device id still exists
+                    // check if tokens match up, if different token,
+                    // expect the tolken to have changed
+                    // update the device token and push to server
+                    // a device token change should almost never happen
+
+                    // if the device id no longer exists,
+                    // open device chooser
+                    // save selected device id
+
+                    openDeviceSelection = true;
+                }
+
+                session.loginUser(sessionResponse.getId(), username, sessionResponse.getName(), sessionResponse.getApiToken());
+
+                pDialog.dismiss();
+
+                if (openDeviceSelection) {
+                    openDeviceSelectionActivity();
+                } else {
+                    loadDashboard();
+                }
+
+            }
+
+            @Override
+            public void onFailure(Call<SessionResponse> call, Throwable t) {
+                Log.d("TAG", "Response = " + t.toString());
+                pDialog.dismiss();
+            }
+        });
     }
 
     private void openDeviceSelectionActivity() {
@@ -250,64 +202,19 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void deleteToken(String token) {
-        JSONObject request = new JSONObject();
-        try {
-            //Populate the request parameters
-            request.put("token", token);
-
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        JsonObjectRequest jsArrayRequest = new JsonObjectRequest
-                (Request.Method.POST, Constants.URL_DESTROY_TOKEN, request, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-
-                        //Check if user got logged in successfully
-                        Log.d(TAG, response.toString());
-                        Log.d(TAG, "should have deleted token");
-
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-
-                        Log.d("TSDFEERROR", "" + error.getMessage() + error.getLocalizedMessage() + error.toString());
-
-                        NetworkResponse response = error.networkResponse;
-                        String temp = "";
-                        if (response != null && response.data != null) {
-                            temp = new String(response.data, StandardCharsets.UTF_8);
-                        }
-
-                        Log.d("TSDFEERROR2", "" + temp);
-                        //Display error message whenever an error occurs
-                        Toast.makeText(getApplicationContext(),
-                                error.getMessage(), Toast.LENGTH_SHORT).show();
-
-                    }
-                }) {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<RemoveTokenResponse> call = apiService.removeToken("Bearer " + sessionResponse.getApiToken(), token);
+        call.enqueue(new Callback<RemoveTokenResponse>() {
+            @Override
+            public void onResponse(Call<RemoveTokenResponse> call, retrofit2.Response<RemoveTokenResponse> response) {
+                Log.d(TAG, "token deleted");
+            }
 
             @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("Authorization", "Bearer " + session.getUserDetails().getApiToken());
-                return params;
+            public void onFailure(Call<RemoveTokenResponse> call, Throwable t) {
+                Log.d("TAG", "Response = " + t.toString());
             }
-        };
-
-        jsArrayRequest.setRetryPolicy(new DefaultRetryPolicy(
-                15 * 1000,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-
-        // Access the RequestQueue through your singleton class.
-        MySingleton.getInstance(this).addToRequestQueue(jsArrayRequest);
-
-
+        });
     }
 
     /**
