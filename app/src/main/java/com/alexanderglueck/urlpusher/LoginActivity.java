@@ -13,7 +13,6 @@ import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.alexanderglueck.urlpusher.responses.AttachTokenResponse;
 import com.alexanderglueck.urlpusher.responses.RemoveTokenResponse;

@@ -17,17 +17,24 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.alexanderglueck.urlpusher.ApiClient;
+import com.alexanderglueck.urlpusher.ApiInterface;
 import com.alexanderglueck.urlpusher.Constants;
 import com.alexanderglueck.urlpusher.LoginActivity;
 import com.alexanderglueck.urlpusher.MainActivity;
 import com.alexanderglueck.urlpusher.Notification;
 import com.alexanderglueck.urlpusher.R;
 import com.alexanderglueck.urlpusher.SessionHandler;
+import com.alexanderglueck.urlpusher.responses.AttachTokenResponse;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.List;
 import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -168,6 +175,21 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             // update device on server
 
             // call attach token
+
+            ApiInterface apiService2 = ApiClient.getClient().create(ApiInterface.class);
+            Call<AttachTokenResponse> attachTokenCall = apiService2.attachToken("Bearer " + helper.getUserDetails().getApiToken(), sharedPreferences.getInt(Constants.LAST_SIGNED_IN_DEVICE_ID, 0), sharedPreferences.getString(Constants.FCM_TOKEN, ""));
+            attachTokenCall.enqueue(new Callback<AttachTokenResponse>() {
+                @Override
+                public void onResponse(Call<AttachTokenResponse> call, Response<AttachTokenResponse> response) {
+
+                }
+
+                @Override
+                public void onFailure(Call<AttachTokenResponse> call, Throwable t) {
+                    Log.d("TAG", "Response = " + t.toString());
+                }
+
+            });
         }
     }
 
