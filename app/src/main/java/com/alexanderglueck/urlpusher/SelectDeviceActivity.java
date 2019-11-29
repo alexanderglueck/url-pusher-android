@@ -5,12 +5,13 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
-import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 
@@ -18,14 +19,24 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class SelectDeviceActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
 
     private SessionHandler session;
+    List<Device> movieList;
+    RecyclerView recyclerView;
+    RecyclerAdapter recyclerAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +45,29 @@ public class SelectDeviceActivity extends AppCompatActivity {
 
         session = new SessionHandler(getApplicationContext());
 
+        movieList = new ArrayList<>();
+        recyclerView = (RecyclerView)findViewById(R.id.deviceRecyclerView);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerAdapter = new RecyclerAdapter(getApplicationContext(),movieList);
+        recyclerView.setAdapter(recyclerAdapter);
+
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<List<Device>> call = apiService.getDevices("Bearer " + session.getUserDetails().getApiToken());
+        call.enqueue(new Callback<List<Device>>() {
+            @Override
+            public void onResponse(Call<List<Device>> call, Response<List<Device>> response) {
+                movieList = response.body();
+                Log.d("TAG","Response = "+movieList);
+                recyclerAdapter.setMovieList(movieList);
+            }
+
+            @Override
+            public void onFailure(Call<List<Device>> call, Throwable t) {
+                Log.d("TAG","Response = "+t.toString());
+            }
+        });
+
         getDevices();
     }
 
@@ -41,7 +75,7 @@ public class SelectDeviceActivity extends AppCompatActivity {
         final JSONArray request = new JSONArray();
 
         JsonArrayRequest jsArrayRequest = new JsonArrayRequest
-                (Request.Method.GET, Constants.URL_FETCH_DEVICES, request, new Response.Listener<JSONArray>() {
+                (com.android.volley.Request.Method.GET, Constants.URL_FETCH_DEVICES, request, new com.android.volley.Response.Listener<JSONArray>() {
                     @Override
                     public void onResponse(JSONArray response) {
 
@@ -61,7 +95,7 @@ public class SelectDeviceActivity extends AppCompatActivity {
                         }
 
                     }
-                }, new Response.ErrorListener() {
+                }, new com.android.volley.Response.ErrorListener() {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {

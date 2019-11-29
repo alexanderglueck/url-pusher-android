@@ -19,4 +19,6 @@ public class Constants {
     public static final String URL_DESTROY_TOKEN = "http://10.0.0.10:8080/api/remove-token";
     public static final String URL_REGISTER = "http://10.0.0.10:8080/api/user";
     public static final String URL_FETCH_DEVICES = "http://10.0.0.10:8080/api/devices";
+
+    public static final String BASE_URL = "http://10.0.0.10:8080/api/";
 }
