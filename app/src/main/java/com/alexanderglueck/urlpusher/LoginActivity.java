@@ -310,14 +310,6 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void openDeviceSelectionActivity() {
-        Intent i = new Intent(getApplicationContext(), SelectDeviceActivity.class);
-
-        startActivity(i);
-        finish();
-
-    }
-
     private void deleteToken(String token) {
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
         Call<RemoveTokenResponse> call = apiService.removeToken("Bearer " + sessionResponse.getApiToken(), token);
