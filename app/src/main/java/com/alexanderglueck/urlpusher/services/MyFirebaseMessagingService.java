@@ -166,6 +166,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         if (helper.isLoggedIn()) {
             // update current connected device with new token
             // update device on server
+
+            // call attach token
         }
     }
 

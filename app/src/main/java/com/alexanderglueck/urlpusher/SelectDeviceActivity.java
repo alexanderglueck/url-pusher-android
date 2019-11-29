@@ -32,26 +32,6 @@ public class SelectDeviceActivity extends AppCompatActivity {
         session = new SessionHandler(getApplicationContext());
 
         deviceList = new ArrayList<>();
-        recyclerView = (RecyclerView) findViewById(R.id.deviceRecyclerView);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerAdapter = new RecyclerAdapter(getApplicationContext(), deviceList);
-        recyclerView.setAdapter(recyclerAdapter);
 
-        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<List<Device>> call = apiService.getDevices("Bearer " + session.getUserDetails().getApiToken());
-        call.enqueue(new Callback<List<Device>>() {
-            @Override
-            public void onResponse(Call<List<Device>> call, Response<List<Device>> response) {
-                deviceList = response.body();
-                Log.d("TAG", "Response = " + deviceList);
-                recyclerAdapter.setMovieList(deviceList);
-            }
-
-            @Override
-            public void onFailure(Call<List<Device>> call, Throwable t) {
-                Log.d("TAG", "Response = " + t.toString());
-            }
-        });
     }
 }

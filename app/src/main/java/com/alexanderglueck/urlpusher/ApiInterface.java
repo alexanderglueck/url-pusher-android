@@ -1,5 +1,6 @@
 package com.alexanderglueck.urlpusher;
 
+import com.alexanderglueck.urlpusher.responses.AttachTokenResponse;
 import com.alexanderglueck.urlpusher.responses.RemoveTokenResponse;
 import com.alexanderglueck.urlpusher.responses.SessionResponse;
 
@@ -18,7 +19,7 @@ public interface ApiInterface {
 
     @FormUrlEncoded
     @POST("attach-token")
-    Call<List<Device>> attachToken(@Header("Authorization") String authHeader, @Field("token") String token);
+    Call<AttachTokenResponse> attachToken(@Header("Authorization") String authHeader, @Field("id") int id, @Field("token") String token);
 
     @FormUrlEncoded
     @POST("remove-token")

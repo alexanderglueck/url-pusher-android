@@ -1,6 +1,7 @@
 package com.alexanderglueck.urlpusher;
 
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -10,10 +11,16 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.alexanderglueck.urlpusher.responses.AttachTokenResponse;
 import com.alexanderglueck.urlpusher.responses.RemoveTokenResponse;
 import com.alexanderglueck.urlpusher.responses.SessionResponse;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -29,7 +36,11 @@ public class LoginActivity extends AppCompatActivity {
     private ProgressDialog pDialog;
     private SessionHandler session;
     private SessionResponse sessionResponse;
-
+    List<Device> deviceList;
+    RecyclerView recyclerView;
+    RecyclerAdapter recyclerAdapter;
+    MyListAdapter listAdapter;
+    SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +51,8 @@ public class LoginActivity extends AppCompatActivity {
             loadDashboard();
         }
         setContentView(R.layout.activity_login);
+
+        sharedPreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_FILE, MODE_PRIVATE);
 
         etUsername = findViewById(R.id.username);
         etPassword = findViewById(R.id.password);
@@ -124,7 +137,6 @@ public class LoginActivity extends AppCompatActivity {
                     Log.d("TAG", "Response = " + sessionResponse.getName() + sessionResponse.getId() + sessionResponse.getApiToken());
 
                     boolean openDeviceSelection = false;
-                    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(Constants.SHARED_PREFERENCES_FILE, MODE_PRIVATE);
 
                     if (sessionResponse.getId() != sharedPreferences.getInt(Constants.LAST_SIGNED_IN_USER_ID, 0)) {
                         Log.d(TAG, "anderer user");
@@ -148,39 +160,87 @@ public class LoginActivity extends AppCompatActivity {
                         // last used device id leeren to not reconnect with wrong
                         sharedPreferences.edit().putInt(Constants.LAST_SIGNED_IN_DEVICE_ID, 0).commit();
 
-                        openDeviceSelection = true;
+                        showDeviceSelectionDialog();
 
                     } else {
                         Log.d(TAG, "gleicher user");
                         // gleicher user hat nach login sich wieder eingeloggt
 
-                        // get list of devices
-                        // if last saved device id still exists
-                        // check if tokens match up, if same token
-                        // reselect this device. we are still set up
+                        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+                        Call<List<Device>> deviceCall = apiService.getDevices("Bearer " + sessionResponse.getApiToken());
+                        deviceCall.enqueue(new Callback<List<Device>>() {
+                            @Override
+                            public void onResponse(Call<List<Device>> call, Response<List<Device>> response) {
+                                deviceList = response.body();
 
 
-                        // if last saved device id still exists
-                        // check if tokens match up, if different token,
-                        // expect the tolken to have changed
-                        // update the device token and push to server
-                        // a device token change should almost never happen
+                                int lastSavedDeviceId = sharedPreferences.getInt(Constants.LAST_SIGNED_IN_DEVICE_ID, 0);
 
-                        // if the device id no longer exists,
-                        // open device chooser
-                        // save selected device id
+                                boolean lastSavedDeviceIdStillExists = false;
+                                boolean tokensMatch = false;
 
-                        openDeviceSelection = true;
-                    }
+                                for (int i = 0; i < deviceList.size(); i++) {
+                                    if (deviceList.get(i).getId() == lastSavedDeviceId) {
+                                        lastSavedDeviceIdStillExists = true;
 
-                    session.loginUser(sessionResponse.getId(), username, sessionResponse.getName(), sessionResponse.getApiToken());
+                                        if (deviceList.get(i).getToken().equals(sharedPreferences.getString(Constants.FCM_TOKEN, ""))) {
+                                            tokensMatch = true;
+                                        }
 
-                    pDialog.dismiss();
+                                        break;
+                                    }
+                                }
 
-                    if (openDeviceSelection) {
-                        openDeviceSelectionActivity();
-                    } else {
-                        loadDashboard();
+                                if (lastSavedDeviceIdStillExists && tokensMatch) {
+                                    // get list of devices
+                                    // if last saved device id still exists
+                                    // check if tokens match up, if same token
+                                    // reselect this device. we are still set up
+                                    session.loginUser(sessionResponse.getId(), username, sessionResponse.getName(), sessionResponse.getApiToken());
+                                    pDialog.dismiss();
+                                    loadDashboard();
+                                } else if (lastSavedDeviceIdStillExists) {
+                                    // if last saved device id still exists
+                                    // check if tokens match up, if different token,
+                                    // expect the tolken to have changed
+                                    // update the device token and push to server
+                                    // a device token change should almost never happen
+
+                                    ApiInterface apiService2 = ApiClient.getClient().create(ApiInterface.class);
+                                    Call<AttachTokenResponse> attachTokenCall = apiService2.attachToken("Bearer " + sessionResponse.getApiToken(), lastSavedDeviceId, sharedPreferences.getString(Constants.FCM_TOKEN, ""));
+                                    attachTokenCall.enqueue(new Callback<AttachTokenResponse>() {
+                                        @Override
+                                        public void onResponse(Call<AttachTokenResponse> call, Response<AttachTokenResponse> response) {
+
+                                            session.loginUser(sessionResponse.getId(), username, sessionResponse.getName(), sessionResponse.getApiToken());
+                                            pDialog.dismiss();
+                                            loadDashboard();
+                                        }
+
+                                        @Override
+                                        public void onFailure(Call<AttachTokenResponse> call, Throwable t) {
+                                            Log.d("TAG", "Response = " + t.toString());
+                                        }
+
+                                    });
+
+
+                                } else {
+                                    // if the device id no longer exists,
+                                    // open device chooser
+                                    // save selected device id
+                                    showDeviceSelectionDialog();
+                                }
+
+
+                            }
+
+                            @Override
+                            public void onFailure(Call<List<Device>> call, Throwable t) {
+                                Log.d("TAG", "Response = " + t.toString());
+                            }
+                        });
+
                     }
                 }
 
@@ -190,6 +250,62 @@ public class LoginActivity extends AppCompatActivity {
             public void onFailure(@NonNull Call<SessionResponse> call, @NonNull Throwable t) {
                 Log.d("TAG", "Response = " + t.toString());
                 pDialog.dismiss();
+            }
+        });
+    }
+
+    private void showDeviceSelectionDialog() {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<List<Device>> deviceCall = apiService.getDevices("Bearer " + sessionResponse.getApiToken());
+        deviceCall.enqueue(new Callback<List<Device>>() {
+            @Override
+            public void onResponse(Call<List<Device>> call, Response<List<Device>> response) {
+                deviceList = response.body();
+                Log.d("TAG", "Response = " + deviceList);
+
+                AlertDialog.Builder builderSingle = new AlertDialog.Builder(LoginActivity.this);
+                builderSingle.setTitle("Select Device:");
+
+                listAdapter = new MyListAdapter(LoginActivity.this, (ArrayList<Device>) deviceList);
+
+                builderSingle.setAdapter(listAdapter, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(final DialogInterface dialog, int which) {
+                        Device device = deviceList.get(which);
+                        Log.d(TAG, device.getName() + " clicked");
+
+
+                        sharedPreferences.edit().putInt(Constants.LAST_SIGNED_IN_DEVICE_ID, device.getId()).commit();
+
+                        ApiInterface apiService2 = ApiClient.getClient().create(ApiInterface.class);
+                        Call<AttachTokenResponse> attachTokenCall = apiService2.attachToken("Bearer " + sessionResponse.getApiToken(), device.getId(), sharedPreferences.getString(Constants.FCM_TOKEN, ""));
+                        attachTokenCall.enqueue(new Callback<AttachTokenResponse>() {
+                            @Override
+                            public void onResponse(Call<AttachTokenResponse> call, Response<AttachTokenResponse> response) {
+
+                                session.loginUser(sessionResponse.getId(), username, sessionResponse.getName(), sessionResponse.getApiToken());
+                                dialog.dismiss();
+                                loadDashboard();
+                            }
+
+                            @Override
+                            public void onFailure(Call<AttachTokenResponse> call, Throwable t) {
+                                Log.d("TAG", "Response = " + t.toString());
+                            }
+
+                        });
+
+
+                    }
+                });
+                builderSingle.setCancelable(false);
+                pDialog.dismiss();
+                builderSingle.show();
+            }
+
+            @Override
+            public void onFailure(Call<List<Device>> call, Throwable t) {
+                Log.d("TAG", "Response = " + t.toString());
             }
         });
     }
