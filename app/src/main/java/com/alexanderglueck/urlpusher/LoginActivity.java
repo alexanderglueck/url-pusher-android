@@ -37,8 +37,6 @@ public class LoginActivity extends AppCompatActivity {
     private SessionHandler session;
     private SessionResponse sessionResponse;
     List<Device> deviceList;
-    RecyclerView recyclerView;
-    RecyclerAdapter recyclerAdapter;
     MyListAdapter listAdapter;
     SharedPreferences sharedPreferences;
 
