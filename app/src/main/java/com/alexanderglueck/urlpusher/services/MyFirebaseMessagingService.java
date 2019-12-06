@@ -76,7 +76,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             SessionHandler helper = new SessionHandler(getApplicationContext());
 
             Notification notification = new Notification();
-            notification.setTitle(data.get(Constants.NOTIFICATION_URL_KEY));
+            notification.setTitle(data.get(Constants.NOTIFICATION_TITLE_KEY));
             notification.setUrl(data.get(Constants.NOTIFICATION_URL_KEY));
             notification.setUserId(Integer.parseInt("" + data.get(Constants.NOTIFICATION_USER_ID_KEY)));
 
@@ -94,8 +94,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 intent.putExtra(Constants.INTENT_EXTRA_NOTIFICATION, notification);
                 //LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 
-                title = data.get(Constants.NOTIFICATION_URL_KEY);
-
                 if (applicationInForeground()) {
                     // eingeloggt und offen
                     Log.d(TAG, "eingeloggt und offen");
@@ -105,7 +103,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     Log.d(TAG, "eingeloggt und zu");
 
                     // eingeloggt und zu
-                    sendNotification(getString(R.string.app_name), title, notification, true);
+                    sendNotification(notification, true);
                 }
 
             } else {
@@ -125,13 +123,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     // wenn jetzt eine notification reinkommt machen wir trotzdem eine notification
                     Log.d(TAG, "ausgeloggt und offen");
 
-                    sendNotification(getString(R.string.new_incoming_link), title, notification, false);
+                    sendNotification(notification, false);
 
                 } else {
                     Log.d(TAG, "ausgeloggt und zu");
 
                     // nicht eingeloggt und zu
-                    sendNotification(getString(R.string.new_incoming_link), title, notification, false);
+                    sendNotification(notification, false);
                 }
             }
 
@@ -195,16 +193,17 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     /**
      * Create and show a simple notification containing the received FCM message.
-     *
-     * @param messageBody FCM message body received.
      */
-    private void sendNotification(String messageTitle, String messageBody, Notification notification, boolean signedIn) {
+    private void sendNotification(Notification notification, boolean signedIn) {
         Intent intent;
+        String title = notification.getTitle();
+        String body = notification.getUrl();
 
         if (signedIn) {
             intent = new Intent(this, MainActivity.class);
         } else {
             intent = new Intent(this, LoginActivity.class);
+            title = "New push incoming";
         }
 
         intent.putExtra(Constants.INTENT_EXTRA_NOTIFICATION, notification);
@@ -218,8 +217,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 new NotificationCompat.Builder(this, channelId)
                         .setSmallIcon(R.drawable.ic_launcher_foreground)
                         .setColor(ContextCompat.getColor(this, R.color.colorAccent))
-                        .setContentTitle(messageTitle)
-                        .setContentText(messageBody)
+                        .setContentTitle(title)
+                        .setContentText(body)
                         .setAutoCancel(true)
                         .setSound(defaultSoundUri)
                         .setContentIntent(pendingIntent);
