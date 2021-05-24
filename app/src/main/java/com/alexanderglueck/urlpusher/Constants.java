@@ -9,6 +9,7 @@ public class Constants {
     public static final String SHARED_PREFERENCES_FILE = "settings";
     public static final String NOTIFICATION_USER_ID_KEY = "user_id";
     public static final String INTENT_EXTRA_NOTIFICATION = "notification";
+    public static final String INTENT_EXTRA_SHARE = "share";
 
     public static final String FCM_TOKEN = "fcm_token";
 

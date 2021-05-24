@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Patterns;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -41,20 +42,37 @@ public class StartActivity extends AppCompatActivity {
 
             activityIntent = new Intent(this, MainActivity.class);
 
-            if (getIntent().getExtras() != null) {
+            Intent intent = getIntent();
 
-                Log.d(TAG, "hat extras");
+            if (intent.getExtras() != null) {
+                Log.d(TAG, "per extra erhalten, dh von zu ");
 
-                for (String key : getIntent().getExtras().keySet()) {
-                    Object value = getIntent().getExtras().get(key);
-                    Log.d(TAG, "Key: " + key + " Value: " + value);
 
-                    if (key.equals(Constants.INTENT_EXTRA_NOTIFICATION)) {
-                        // notification received
-                        // keep extras for main activity
+                String action = intent.getAction();
+                String type = intent.getType();
 
-                        // resend it to main activity
-                        activityIntent.putExtra(Constants.INTENT_EXTRA_NOTIFICATION, getIntent().getExtras().getSerializable(Constants.INTENT_EXTRA_NOTIFICATION));
+                if (Intent.ACTION_SEND.equals(action) && type != null) {
+                    String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
+                    if (sharedText != null) {
+                        if (Patterns.WEB_URL.matcher(sharedText).matches()) {
+                            activityIntent.putExtra(Constants.INTENT_EXTRA_SHARE, sharedText);
+                        }
+                    }
+                } else {
+
+                    Log.d(TAG, "hat extras");
+
+                    for (String key : intent.getExtras().keySet()) {
+                        Object value = intent.getExtras().get(key);
+                        Log.d(TAG, "Key: " + key + " Value: " + value);
+
+                        if (key.equals(Constants.INTENT_EXTRA_NOTIFICATION)) {
+                            // notification received
+                            // keep extras for main activity
+
+                            // resend it to main activity
+                            activityIntent.putExtra(Constants.INTENT_EXTRA_NOTIFICATION, intent.getExtras().getSerializable(Constants.INTENT_EXTRA_NOTIFICATION));
+                        }
                     }
                 }
             } else {

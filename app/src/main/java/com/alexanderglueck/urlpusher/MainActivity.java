@@ -114,6 +114,11 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 }
+
+                if (key.equals(Constants.INTENT_EXTRA_SHARE)) {
+                    // url was shared to app
+                    Log.d(TAG, "url received: " + value);
+                }
             }
         }
     }
