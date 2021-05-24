@@ -2,8 +2,10 @@ package com.alexanderglueck.urlpusher;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,15 +15,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.alexanderglueck.urlpusher.responses.AttachTokenResponse;
+import com.alexanderglueck.urlpusher.responses.PushUrlResponse;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -118,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
                 if (key.equals(Constants.INTENT_EXTRA_SHARE)) {
                     // url was shared to app
                     Log.d(TAG, "url received: " + value);
+                    pushUrl(getIntent().getStringExtra(Constants.INTENT_EXTRA_SHARE));
                 }
             }
         }
@@ -131,6 +143,29 @@ public class MainActivity extends AppCompatActivity {
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         i.setData(Uri.parse(url));
         startActivity(i);
+    }
+
+    private void pushUrl(String url) {
+        session = new SessionHandler(getApplicationContext());
+        User user = session.getUserDetails();
+
+        SharedPreferences sharedPreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_FILE, MODE_PRIVATE);
+        int lastSavedDeviceId = sharedPreferences.getInt(Constants.LAST_SIGNED_IN_DEVICE_ID, 0);
+
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<PushUrlResponse> pushUrlCall = apiService.pushUrl("Bearer " + user.getApiToken(), lastSavedDeviceId, url);
+        pushUrlCall.enqueue(new Callback<PushUrlResponse>() {
+            @Override
+            public void onResponse(Call<PushUrlResponse> call, Response<PushUrlResponse> response) {
+                Toast.makeText(MainActivity.this, "URL pushed", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(Call<PushUrlResponse> call, Throwable t) {
+                Log.d("TAG", "Response = " + t.toString());
+                Toast.makeText(MainActivity.this, "URL pushed", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

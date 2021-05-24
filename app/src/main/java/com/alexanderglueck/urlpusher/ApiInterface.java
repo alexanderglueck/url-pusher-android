@@ -1,6 +1,7 @@
 package com.alexanderglueck.urlpusher;
 
 import com.alexanderglueck.urlpusher.responses.AttachTokenResponse;
+import com.alexanderglueck.urlpusher.responses.PushUrlResponse;
 import com.alexanderglueck.urlpusher.responses.RemoveTokenResponse;
 import com.alexanderglueck.urlpusher.responses.SessionResponse;
 
@@ -28,4 +29,8 @@ public interface ApiInterface {
     @FormUrlEncoded
     @POST("session")
     Call<SessionResponse> login(@Field("email") String email, @Field("password") String password);
+
+    @FormUrlEncoded
+    @POST("urls")
+    Call<PushUrlResponse> pushUrl(@Header("Authorization") String authHeader, @Field("device_id") int deviceId, @Field("url") String url);
 }
