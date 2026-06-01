@@ -75,7 +75,7 @@ fun SignUpScreen(
             OutlinedTextField(
                 value = state.email,
                 onValueChange = viewModel::onEmailChange,
-                label = { Text(stringResource(R.string.login_email_label)) },
+                label = { Text(stringResource(R.string.auth_email_label)) },
                 singleLine = true,
                 enabled = !state.submitting,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -85,7 +85,7 @@ fun SignUpScreen(
             OutlinedTextField(
                 value = state.password,
                 onValueChange = viewModel::onPasswordChange,
-                label = { Text(stringResource(R.string.login_password_label)) },
+                label = { Text(stringResource(R.string.auth_password_label)) },
                 singleLine = true,
                 enabled = !state.submitting,
                 visualTransformation = PasswordVisualTransformation(),

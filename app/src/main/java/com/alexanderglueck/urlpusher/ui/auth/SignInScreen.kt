@@ -38,14 +38,14 @@ import com.alexanderglueck.urlpusher.R
 @Composable
 fun SignInScreen(
     onBack: () -> Unit,
-    viewModel: LoginViewModel = hiltViewModel(),
+    viewModel: SignInViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.login_title)) },
+                title = { Text(stringResource(R.string.signin_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -65,7 +65,7 @@ fun SignInScreen(
             OutlinedTextField(
                 value = state.email,
                 onValueChange = viewModel::onEmailChange,
-                label = { Text(stringResource(R.string.login_email_label)) },
+                label = { Text(stringResource(R.string.auth_email_label)) },
                 singleLine = true,
                 enabled = !state.submitting,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -75,7 +75,7 @@ fun SignInScreen(
             OutlinedTextField(
                 value = state.password,
                 onValueChange = viewModel::onPasswordChange,
-                label = { Text(stringResource(R.string.login_password_label)) },
+                label = { Text(stringResource(R.string.auth_password_label)) },
                 singleLine = true,
                 enabled = !state.submitting,
                 visualTransformation = PasswordVisualTransformation(),
@@ -104,7 +104,7 @@ fun SignInScreen(
                         strokeWidth = 2.dp,
                     )
                 } else {
-                    Text(stringResource(R.string.login_sign_in))
+                    Text(stringResource(R.string.signin_action))
                 }
             }
         }

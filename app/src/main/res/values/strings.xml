@@ -11,15 +11,14 @@
     <string name="welcome_sign_in">Sign in with email</string>
     <string name="welcome_sign_up">Create an account</string>
 
-    <string name="login_title">Sign in</string>
-    <string name="login_email_label">Email</string>
-    <string name="login_password_label">Password</string>
-    <string name="login_sign_in">Sign in</string>
-    <string name="login_signing_in">Signing in…</string>
-    <string name="login_error_generic">Sign-in failed. Check your email and password.</string>
-    <string name="login_error_empty_email">Enter your email.</string>
-    <string name="login_error_empty_password">Enter your password.</string>
-    <string name="login_error_network">Could not reach the server.</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_error_empty_email">Enter your email.</string>
+    <string name="auth_error_empty_password">Enter your password.</string>
+
+    <string name="signin_title">Sign in</string>
+    <string name="signin_action">Sign in</string>
+    <string name="signin_error_generic">Sign-in failed. Check your email and password.</string>
 
     <string name="signup_title">Create account</string>
     <string name="signup_name_label">Name</string>
@@ -63,6 +62,11 @@
     <string name="home_delete_dialog_title">Delete this URL?</string>
     <string name="home_delete_confirm">Delete</string>
     <string name="home_delete_cancel">Cancel</string>
+    <string name="home_row_more">More actions</string>
+    <string name="home_action_share">Share</string>
+    <string name="home_action_copy">Copy link</string>
+    <string name="home_action_delete">Delete</string>
+    <string name="home_copied">Link copied</string>
 
     <string name="share_pushing">Pushing URL…</string>
     <string name="share_pushed">URL pushed</string>

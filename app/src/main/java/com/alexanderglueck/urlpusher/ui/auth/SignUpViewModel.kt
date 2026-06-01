@@ -41,8 +41,8 @@ class SignUpViewModel @Inject constructor(
         if (current.submitting) return
         val error = when {
             current.name.isBlank() -> R.string.signup_error_empty_name
-            current.email.isBlank() -> R.string.login_error_empty_email
-            current.password.isBlank() -> R.string.login_error_empty_password
+            current.email.isBlank() -> R.string.auth_error_empty_email
+            current.password.isBlank() -> R.string.auth_error_empty_password
             current.password.length < 8 -> R.string.signup_error_short_password
             current.password != current.passwordConfirmation -> R.string.signup_error_password_mismatch
             else -> null

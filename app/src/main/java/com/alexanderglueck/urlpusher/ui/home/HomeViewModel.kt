@@ -54,10 +54,7 @@ class HomeViewModel @Inject constructor(
     ) { snapshot, feed, t ->
         HomeUiState(
             userName = snapshot.user?.name.orEmpty(),
-            activeDeviceName = feed.items
-                .firstOrNull { it.deviceName != null }
-                ?.deviceName
-                ?: snapshot.activeDeviceId?.let { "Device $it" },
+            activeDeviceName = snapshot.activeDeviceName,
             feed = feed,
             pushing = t.pushing,
             toast = t.toast,

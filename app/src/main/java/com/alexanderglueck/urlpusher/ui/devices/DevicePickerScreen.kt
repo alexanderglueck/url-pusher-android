@@ -58,7 +58,7 @@ fun DevicePickerScreen(
                         DeviceRow(
                             device = device,
                             isSelecting = state.selecting == device.id,
-                            onClick = { viewModel.select(device.id) },
+                            onClick = { viewModel.select(device) },
                         )
                     }
                 }

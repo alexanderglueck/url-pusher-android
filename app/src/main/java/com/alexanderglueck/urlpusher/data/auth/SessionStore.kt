@@ -16,6 +16,7 @@ import javax.inject.Singleton
 data class SessionSnapshot(
     val user: User?,
     val activeDeviceId: Long?,
+    val activeDeviceName: String?,
     val fcmToken: String?,
 )
 
@@ -33,6 +34,7 @@ class SessionStore @Inject constructor(
         SessionSnapshot(
             user = user,
             activeDeviceId = prefs[KEY_DEVICE_ID],
+            activeDeviceName = prefs[KEY_DEVICE_NAME],
             fcmToken = prefs[KEY_FCM_TOKEN],
         )
     }
@@ -47,12 +49,18 @@ class SessionStore @Inject constructor(
         }
     }
 
-    suspend fun saveActiveDevice(deviceId: Long) {
-        store.edit { it[KEY_DEVICE_ID] = deviceId }
+    suspend fun saveActiveDevice(deviceId: Long, deviceName: String) {
+        store.edit {
+            it[KEY_DEVICE_ID] = deviceId
+            it[KEY_DEVICE_NAME] = deviceName
+        }
     }
 
     suspend fun clearActiveDevice() {
-        store.edit { it.remove(KEY_DEVICE_ID) }
+        store.edit {
+            it.remove(KEY_DEVICE_ID)
+            it.remove(KEY_DEVICE_NAME)
+        }
     }
 
     suspend fun saveFcmToken(token: String) {
@@ -65,6 +73,7 @@ class SessionStore @Inject constructor(
             it.remove(KEY_USER_NAME)
             it.remove(KEY_USER_EMAIL)
             it.remove(KEY_DEVICE_ID)
+            it.remove(KEY_DEVICE_NAME)
         }
     }
 
@@ -73,6 +82,7 @@ class SessionStore @Inject constructor(
         val KEY_USER_NAME = stringPreferencesKey("user_name")
         val KEY_USER_EMAIL = stringPreferencesKey("user_email")
         val KEY_DEVICE_ID = longPreferencesKey("active_device_id")
+        val KEY_DEVICE_NAME = stringPreferencesKey("active_device_name")
         val KEY_FCM_TOKEN = stringPreferencesKey("fcm_token")
     }
 }

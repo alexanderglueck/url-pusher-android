@@ -39,7 +39,7 @@ class DefaultPairingRepository @Inject constructor(
         return runCatching {
             val response = api.pair(PairDeviceRequest(code = code, name = deviceName, token = fcmToken))
             response.token?.takeIf { it.isNotBlank() }?.let { tokenStore.save(it) }
-            sessionStore.saveActiveDevice(response.device.id)
+            sessionStore.saveActiveDevice(response.device.id, response.device.name)
             if (sessionStore.current().user == null) {
                 val me = api.me().data
                 sessionStore.saveUser(User(me.id, me.name, me.email))

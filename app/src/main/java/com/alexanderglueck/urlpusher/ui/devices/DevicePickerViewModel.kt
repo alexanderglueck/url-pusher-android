@@ -40,11 +40,11 @@ class DevicePickerViewModel @Inject constructor(
         }
     }
 
-    fun select(deviceId: Long) {
+    fun select(device: Device) {
         if (_state.value.selecting != null) return
-        _state.update { it.copy(selecting = deviceId, error = null) }
+        _state.update { it.copy(selecting = device.id, error = null) }
         viewModelScope.launch {
-            devicesRepository.selectDevice(deviceId)
+            devicesRepository.selectDevice(device)
                 .onFailure { err -> _state.update { it.copy(selecting = null, error = err.message ?: "error") } }
         }
     }
