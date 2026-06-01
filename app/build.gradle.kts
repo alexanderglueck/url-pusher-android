@@ -23,7 +23,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8088/api/v1/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://url-pusher.com/api/v1/\"")
             isMinifyEnabled = false
         }
         release {
@@ -82,9 +82,12 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.androidx.datastore.preferences)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+
+    implementation(libs.play.services.code.scanner)
 }

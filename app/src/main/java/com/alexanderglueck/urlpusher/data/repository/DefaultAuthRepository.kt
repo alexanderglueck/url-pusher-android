@@ -5,6 +5,7 @@ import com.alexanderglueck.urlpusher.data.auth.SessionStore
 import com.alexanderglueck.urlpusher.data.auth.TokenStore
 import com.alexanderglueck.urlpusher.data.network.ApiService
 import com.alexanderglueck.urlpusher.data.network.dto.LoginRequest
+import com.alexanderglueck.urlpusher.data.network.dto.RegisterRequest
 import com.alexanderglueck.urlpusher.domain.model.User
 import com.alexanderglueck.urlpusher.domain.repository.AuthRepository
 import javax.inject.Inject
@@ -26,6 +27,29 @@ class DefaultAuthRepository @Inject constructor(
             sessionStore.saveUser(user)
             user
         }
+
+    override suspend fun register(
+        name: String,
+        email: String,
+        password: String,
+        passwordConfirmation: String,
+        deviceName: String,
+    ): Result<User> = runCatching {
+        val deviceLabel = deviceName.ifBlank { "${Build.MANUFACTURER} ${Build.MODEL}" }
+        val response = api.register(
+            RegisterRequest(
+                name = name,
+                email = email,
+                password = password,
+                passwordConfirmation = passwordConfirmation,
+                deviceName = deviceLabel,
+            )
+        )
+        tokenStore.save(response.token)
+        val user = User(response.user.id, response.user.name, response.user.email)
+        sessionStore.saveUser(user)
+        user
+    }
 
     override suspend fun logout(): Result<Unit> = runCatching {
         runCatching { api.logout() }

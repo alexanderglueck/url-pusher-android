@@ -2,9 +2,11 @@ package com.alexanderglueck.urlpusher.di
 
 import com.alexanderglueck.urlpusher.data.repository.DefaultAuthRepository
 import com.alexanderglueck.urlpusher.data.repository.DefaultDevicesRepository
+import com.alexanderglueck.urlpusher.data.repository.DefaultPairingRepository
 import com.alexanderglueck.urlpusher.data.repository.DefaultUrlsRepository
 import com.alexanderglueck.urlpusher.domain.repository.AuthRepository
 import com.alexanderglueck.urlpusher.domain.repository.DevicesRepository
+import com.alexanderglueck.urlpusher.domain.repository.PairingRepository
 import com.alexanderglueck.urlpusher.domain.repository.UrlsRepository
 import dagger.Binds
 import dagger.Module
@@ -27,4 +29,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindUrlsRepository(impl: DefaultUrlsRepository): UrlsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPairingRepository(impl: DefaultPairingRepository): PairingRepository
 }

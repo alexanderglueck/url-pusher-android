@@ -5,6 +5,12 @@
     <string name="default_notification_channel_name">Pushed links</string>
     <string name="default_notification_channel_description">Notifications for URLs pushed to this device.</string>
 
+    <string name="welcome_tagline">Push URLs to your phone from any browser.</string>
+    <string name="welcome_scan_qr">Scan QR to pair</string>
+    <string name="welcome_scan_qr_hint">Show this device the QR code from the URL-Pusher web app to sign in instantly.</string>
+    <string name="welcome_sign_in">Sign in with email</string>
+    <string name="welcome_sign_up">Create an account</string>
+
     <string name="login_title">Sign in</string>
     <string name="login_email_label">Email</string>
     <string name="login_password_label">Password</string>
@@ -15,20 +21,48 @@
     <string name="login_error_empty_password">Enter your password.</string>
     <string name="login_error_network">Could not reach the server.</string>
 
+    <string name="signup_title">Create account</string>
+    <string name="signup_name_label">Name</string>
+    <string name="signup_password_confirm_label">Confirm password</string>
+    <string name="signup_submit">Create account</string>
+    <string name="signup_error_empty_name">Enter your name.</string>
+    <string name="signup_error_short_password">Password must be at least 8 characters.</string>
+    <string name="signup_error_password_mismatch">Passwords do not match.</string>
+    <string name="signup_error_generic">Could not create the account. Check your details and try again.</string>
+
+    <string name="qr_pair_title">Pair device</string>
+    <string name="qr_pair_subtitle">Open URL-Pusher in your browser, show the pairing QR, and point your camera at it.</string>
+    <string name="qr_pair_scan_button">Scan QR code</string>
+    <string name="qr_pair_scanning">Looking for QR code…</string>
+    <string name="qr_pair_pairing">Pairing this device…</string>
+    <string name="qr_pair_error_scan">Could not scan the QR. Try again.</string>
+    <string name="qr_pair_error_invalid">That QR code is not a URL-Pusher pairing code.</string>
+    <string name="qr_pair_error_expired">The pairing code is invalid or expired. Generate a new one on the web.</string>
+    <string name="qr_pair_error_unauthorized">Sign-in needed for this pairing code.</string>
+    <string name="qr_pair_error_server">The server hit an error. Try again in a moment.</string>
+    <string name="qr_pair_error_network">Could not reach the server. Check your connection and the API URL.</string>
+    <string name="qr_pair_error_no_fcm">Push notifications aren\'t set up on this build. Drop a real google-services.json into app/ from your Firebase console.</string>
+    <string name="qr_pair_error_pair">Pairing failed. Check logcat (tag: Pairing) for details.</string>
+
     <string name="devices_title">Choose this device</string>
     <string name="devices_subtitle">Pick which of your registered devices this phone should act as.</string>
     <string name="devices_empty">No devices found. Add one in the web app first.</string>
     <string name="devices_cannot_push">This device cannot receive pushes.</string>
     <string name="devices_select">Select</string>
     <string name="devices_loading">Loading devices…</string>
+    <string name="devices_scan_qr_instead">Scan QR to pair this device instead</string>
 
     <string name="home_title">URL-Pusher</string>
-    <string name="home_welcome">Signed in as %1$s</string>
-    <string name="home_current_device">Active device: %1$s</string>
-    <string name="home_no_device">No device selected.</string>
     <string name="home_change_device">Change device</string>
     <string name="home_sign_out">Sign out</string>
-    <string name="home_share_hint">Use your browser\'s share menu and pick URL-Pusher to push a link to this device.</string>
+    <string name="home_empty_title">No pushes yet</string>
+    <string name="home_empty_body">Share a URL from your browser, or use URL-Pusher on the web to send links to this phone.</string>
+    <string name="home_feed_error">Could not load recent pushes. Pull to retry.</string>
+    <string name="home_deleted">URL deleted</string>
+    <string name="home_delete_failed">Could not delete that URL</string>
+    <string name="home_delete_dialog_title">Delete this URL?</string>
+    <string name="home_delete_confirm">Delete</string>
+    <string name="home_delete_cancel">Cancel</string>
 
     <string name="share_pushing">Pushing URL…</string>
     <string name="share_pushed">URL pushed</string>

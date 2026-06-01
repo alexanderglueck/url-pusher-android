@@ -13,6 +13,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -29,7 +30,10 @@ import com.alexanderglueck.urlpusher.domain.model.Device
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DevicePickerScreen(viewModel: DevicePickerViewModel = hiltViewModel()) {
+fun DevicePickerScreen(
+    onScanQrInstead: () -> Unit,
+    viewModel: DevicePickerViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsState()
 
     Scaffold(
@@ -63,6 +67,13 @@ fun DevicePickerScreen(viewModel: DevicePickerViewModel = hiltViewModel()) {
                 Spacer(Modifier.height(12.dp))
                 Text(text = it, color = MaterialTheme.colorScheme.error)
             }
+
+            Spacer(Modifier.height(24.dp))
+
+            OutlinedButton(
+                onClick = onScanQrInstead,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(R.string.devices_scan_qr_instead)) }
         }
     }
 }
