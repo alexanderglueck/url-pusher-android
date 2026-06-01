@@ -23,7 +23,7 @@ class SessionViewModel @Inject constructor(
         combine(tokenStore.token, sessionStore.snapshot) { token, snapshot ->
             when {
                 token.isNullOrBlank() || snapshot.user == null -> SessionState.SignedOut
-                snapshot.activeDeviceId.isNullOrBlank() -> SessionState.NeedsDevice
+                snapshot.activeDeviceId == null -> SessionState.NeedsDevice
                 else -> SessionState.Ready
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, SessionState.Loading)

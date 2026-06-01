@@ -18,7 +18,7 @@ class DefaultDevicesRepository @Inject constructor(
         api.listDevices().data.map { Device(it.id, it.name, it.canPush) }
     }
 
-    override suspend fun selectDevice(deviceId: String): Result<Unit> = runCatching {
+    override suspend fun selectDevice(deviceId: Long): Result<Unit> = runCatching {
         val fcm = sessionStore.current().fcmToken
         if (!fcm.isNullOrBlank()) {
             api.attachToken(deviceId, AttachTokenRequest(fcm))

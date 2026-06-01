@@ -16,7 +16,7 @@ data class DevicePickerUiState(
     val loading: Boolean = true,
     val devices: List<Device> = emptyList(),
     val error: String? = null,
-    val selecting: String? = null,
+    val selecting: Long? = null,
 )
 
 @HiltViewModel
@@ -40,7 +40,7 @@ class DevicePickerViewModel @Inject constructor(
         }
     }
 
-    fun select(deviceId: String) {
+    fun select(deviceId: Long) {
         if (_state.value.selecting != null) return
         _state.update { it.copy(selecting = deviceId, error = null) }
         viewModelScope.launch {

@@ -39,12 +39,12 @@ interface ApiService {
 
     @POST("devices/{device}/token")
     suspend fun attachToken(
-        @Path("device") deviceId: String,
+        @Path("device") deviceId: Long,
         @Body body: AttachTokenRequest,
     ): DataEnvelope<DeviceDto>
 
     @DELETE("devices/{device}/token")
-    suspend fun removeToken(@Path("device") deviceId: String): Response<Unit>
+    suspend fun removeToken(@Path("device") deviceId: Long): Response<Unit>
 
     @POST("devices/pair")
     suspend fun pair(@Body body: PairDeviceRequest): PairDeviceResponse

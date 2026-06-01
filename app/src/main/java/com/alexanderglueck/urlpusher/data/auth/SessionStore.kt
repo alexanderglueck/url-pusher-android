@@ -3,6 +3,7 @@ package com.alexanderglueck.urlpusher.data.auth
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.alexanderglueck.urlpusher.domain.model.User
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -14,7 +15,7 @@ import javax.inject.Singleton
 
 data class SessionSnapshot(
     val user: User?,
-    val activeDeviceId: String?,
+    val activeDeviceId: Long?,
     val fcmToken: String?,
 )
 
@@ -46,7 +47,7 @@ class SessionStore @Inject constructor(
         }
     }
 
-    suspend fun saveActiveDevice(deviceId: String) {
+    suspend fun saveActiveDevice(deviceId: Long) {
         store.edit { it[KEY_DEVICE_ID] = deviceId }
     }
 
@@ -71,7 +72,7 @@ class SessionStore @Inject constructor(
         val KEY_USER_ID = intPreferencesKey("user_id")
         val KEY_USER_NAME = stringPreferencesKey("user_name")
         val KEY_USER_EMAIL = stringPreferencesKey("user_email")
-        val KEY_DEVICE_ID = stringPreferencesKey("active_device_id")
+        val KEY_DEVICE_ID = longPreferencesKey("active_device_id")
         val KEY_FCM_TOKEN = stringPreferencesKey("fcm_token")
     }
 }
