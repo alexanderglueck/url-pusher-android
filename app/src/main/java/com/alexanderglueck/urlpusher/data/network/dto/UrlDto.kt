@@ -8,7 +8,7 @@ data class UrlDto(
     val id: Long,
     val url: String,
     val title: String? = null,
-    @SerialName("device_id") val deviceId: Long,
+    @SerialName("device_id") val deviceId: Long? = null,
     val device: DeviceDto? = null,
     @SerialName("created_at") val createdAt: String? = null,
 )
