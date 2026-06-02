@@ -1,9 +1,10 @@
 package com.alexanderglueck.urlpusher.domain.model
 
 data class PushedUrl(
-    val id: Long,
+    val id: String,
     val url: String,
     val title: String?,
+    val imageUrl: String?,
     val deviceName: String?,
     val createdAt: String?,
 )

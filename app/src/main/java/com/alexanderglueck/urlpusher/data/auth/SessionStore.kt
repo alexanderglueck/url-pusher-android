@@ -2,8 +2,6 @@ package com.alexanderglueck.urlpusher.data.auth
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.alexanderglueck.urlpusher.domain.model.User
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,7 +13,7 @@ import javax.inject.Singleton
 
 data class SessionSnapshot(
     val user: User?,
-    val activeDeviceId: Long?,
+    val activeDeviceId: String?,
     val activeDeviceName: String?,
     val fcmToken: String?,
 )
@@ -49,7 +47,7 @@ class SessionStore @Inject constructor(
         }
     }
 
-    suspend fun saveActiveDevice(deviceId: Long, deviceName: String) {
+    suspend fun saveActiveDevice(deviceId: String, deviceName: String) {
         store.edit {
             it[KEY_DEVICE_ID] = deviceId
             it[KEY_DEVICE_NAME] = deviceName
@@ -78,10 +76,14 @@ class SessionStore @Inject constructor(
     }
 
     private companion object {
-        val KEY_USER_ID = intPreferencesKey("user_id")
+        // Suffixed keys: IDs migrated from numeric to ULID strings. The old
+        // Int/Long-typed values under the unsuffixed names are abandoned (reading
+        // them as String would throw), so a pre-migration session reads as
+        // signed-out and the user re-authenticates — matching the server cutover.
+        val KEY_USER_ID = stringPreferencesKey("user_id_ulid")
         val KEY_USER_NAME = stringPreferencesKey("user_name")
         val KEY_USER_EMAIL = stringPreferencesKey("user_email")
-        val KEY_DEVICE_ID = longPreferencesKey("active_device_id")
+        val KEY_DEVICE_ID = stringPreferencesKey("active_device_id_ulid")
         val KEY_DEVICE_NAME = stringPreferencesKey("active_device_name")
         val KEY_FCM_TOKEN = stringPreferencesKey("fcm_token")
     }

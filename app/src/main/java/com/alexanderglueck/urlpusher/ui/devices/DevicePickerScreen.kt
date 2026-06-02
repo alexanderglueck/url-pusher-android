@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -108,7 +109,7 @@ private fun DeviceRow(device: Device, isSelecting: Boolean, onClick: () -> Unit)
             }
             if (isSelecting) {
                 Spacer(Modifier.height(8.dp))
-                CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.height(20.dp))
+                CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
             }
         }
     }

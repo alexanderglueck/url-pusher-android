@@ -90,4 +90,6 @@ dependencies {
     implementation(libs.firebase.messaging)
 
     implementation(libs.play.services.code.scanner)
+
+    implementation(libs.coil.compose)
 }

@@ -3,7 +3,10 @@ package com.alexanderglueck.urlpusher.ui.home
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,24 +18,34 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -51,16 +64,25 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
+import coil.request.ImageRequest
 import com.alexanderglueck.urlpusher.R
+import com.alexanderglueck.urlpusher.domain.model.Device
 import com.alexanderglueck.urlpusher.domain.model.PushedUrl
 import kotlinx.coroutines.launch
 
@@ -107,7 +129,10 @@ fun HomeScreen(
                 title = {
                     Column {
                         Text(stringResource(R.string.home_title))
-                        val subtitle = state.activeDeviceName ?: state.userName
+                        // Show the active device name only. Previously this fell
+                        // back to the user's name, which flashed briefly while
+                        // switching devices (active device momentarily cleared).
+                        val subtitle = state.activeDeviceName.orEmpty()
                         if (subtitle.isNotBlank()) {
                             Text(
                                 text = subtitle,
@@ -142,6 +167,11 @@ fun HomeScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = viewModel::openCompose) {
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.home_fab_compose))
+            }
+        },
     ) { innerPadding ->
         PullToRefreshBox(
             isRefreshing = state.feed.refreshing,
@@ -158,10 +188,21 @@ fun HomeScreen(
                     clipboard.setText(AnnotatedString(url.url))
                     scope.launch { snackbarHostState.showSnackbar(copiedMessage) }
                 },
+                onSendClick = viewModel::sendToAnotherDevice,
                 onDeleteClick = { url -> pendingDelete = url },
                 onEndReached = viewModel::loadMore,
             )
         }
+    }
+
+    state.sendDialog?.let { dialog ->
+        SendDialog(
+            state = dialog,
+            onUrlChange = viewModel::updateComposeUrl,
+            onSelectDevice = viewModel::selectTargetDevice,
+            onConfirm = viewModel::confirmSend,
+            onDismiss = viewModel::dismissSendDialog,
+        )
     }
 
     pendingDelete?.let { target ->
@@ -190,6 +231,7 @@ private fun FeedContent(
     onItemClick: (PushedUrl) -> Unit,
     onShareClick: (PushedUrl) -> Unit,
     onCopyClick: (PushedUrl) -> Unit,
+    onSendClick: (PushedUrl) -> Unit,
     onDeleteClick: (PushedUrl) -> Unit,
     onEndReached: () -> Unit,
 ) {
@@ -205,6 +247,7 @@ private fun FeedContent(
             onItemClick = onItemClick,
             onShareClick = onShareClick,
             onCopyClick = onCopyClick,
+            onSendClick = onSendClick,
             onDeleteClick = onDeleteClick,
             onEndReached = onEndReached,
         )
@@ -217,6 +260,7 @@ private fun FeedList(
     onItemClick: (PushedUrl) -> Unit,
     onShareClick: (PushedUrl) -> Unit,
     onCopyClick: (PushedUrl) -> Unit,
+    onSendClick: (PushedUrl) -> Unit,
     onDeleteClick: (PushedUrl) -> Unit,
     onEndReached: () -> Unit,
 ) {
@@ -245,6 +289,7 @@ private fun FeedList(
                 onClick = { onItemClick(url) },
                 onShare = { onShareClick(url) },
                 onCopy = { onCopyClick(url) },
+                onSend = { onSendClick(url) },
                 onDelete = { onDeleteClick(url) },
             )
             HorizontalDivider()
@@ -267,6 +312,7 @@ private fun UrlRow(
     onClick: () -> Unit,
     onShare: () -> Unit,
     onCopy: () -> Unit,
+    onSend: () -> Unit,
     onDelete: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -281,6 +327,10 @@ private fun UrlRow(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (url.imageUrl != null) {
+            LinkThumbnail(imageUrl = url.imageUrl)
+            Spacer(Modifier.width(12.dp))
+        }
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -346,6 +396,14 @@ private fun UrlRow(
                         },
                     )
                     DropdownMenuItem(
+                        text = { Text(stringResource(R.string.home_action_send)) },
+                        leadingIcon = { Icon(Icons.Filled.PhoneAndroid, contentDescription = null) },
+                        onClick = {
+                            menuOpen = false
+                            onSend()
+                        },
+                    )
+                    DropdownMenuItem(
                         text = { Text(stringResource(R.string.home_action_delete)) },
                         leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null) },
                         onClick = {
@@ -359,6 +417,177 @@ private fun UrlRow(
     }
 }
 
+/**
+ * Small website preview image. Falls back to a tasteful broken-image glyph on a
+ * surface tile when the URL fails to load (instead of the native broken-image
+ * icon), and shows a spinner while loading. Callers omit this entirely when the
+ * link has no preview image.
+ */
+@Composable
+private fun LinkThumbnail(imageUrl: String, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(56.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center,
+    ) {
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(imageUrl)
+                .crossfade(true)
+                .build(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+            loading = {
+                CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+            },
+            error = {
+                Icon(
+                    imageVector = Icons.Filled.BrokenImage,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp),
+                )
+            },
+            success = { SubcomposeAsyncImageContent() },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SendDialog(
+    state: SendDialogState,
+    onUrlChange: (String) -> Unit,
+    onSelectDevice: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = { if (!state.sending) onDismiss() },
+        title = {
+            Text(
+                stringResource(
+                    if (state.editableUrl) R.string.compose_title else R.string.compose_resend_title,
+                ),
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (state.editableUrl) {
+                    OutlinedTextField(
+                        value = state.url,
+                        onValueChange = onUrlChange,
+                        label = { Text(stringResource(R.string.compose_url_label)) },
+                        singleLine = true,
+                        enabled = !state.sending,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Uri,
+                            autoCorrectEnabled = false,
+                            capitalization = KeyboardCapitalization.None,
+                            imeAction = ImeAction.Go,
+                        ),
+                        keyboardActions = KeyboardActions(onGo = { onConfirm() }),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    Text(
+                        text = state.title ?: state.url,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (state.title != null) {
+                        Text(
+                            text = state.url,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+
+                when {
+                    state.loadingDevices -> CircularProgressIndicator(
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    state.devices.none { it.canPush } -> Text(
+                        text = stringResource(R.string.compose_no_devices),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    else -> DeviceDropdown(
+                        devices = state.devices,
+                        selectedDeviceId = state.selectedDeviceId,
+                        enabled = !state.sending,
+                        onSelectDevice = onSelectDevice,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = state.canSend) {
+                if (state.sending) {
+                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                } else {
+                    Text(stringResource(R.string.compose_send))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.sending) {
+                Text(stringResource(R.string.compose_cancel))
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DeviceDropdown(
+    devices: List<Device>,
+    selectedDeviceId: String?,
+    enabled: Boolean,
+    onSelectDevice: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selected = devices.firstOrNull { it.id == selectedDeviceId }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { if (enabled) expanded = it },
+    ) {
+        OutlinedTextField(
+            value = selected?.name.orEmpty(),
+            onValueChange = {},
+            readOnly = true,
+            enabled = enabled,
+            label = { Text(stringResource(R.string.compose_send_to_label)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                .fillMaxWidth(),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            devices.forEach { device ->
+                DropdownMenuItem(
+                    text = { Text(device.name) },
+                    enabled = device.canPush,
+                    onClick = {
+                        onSelectDevice(device.id)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun CenteredSpinner() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -366,46 +595,58 @@ private fun CenteredSpinner() {
     }
 }
 
+// The empty and error states are hosted in a LazyColumn with a single
+// viewport-filling item. The list still reports nested-scroll events even with
+// nothing to scroll, so the surrounding PullToRefreshBox can detect the pull —
+// a plain Box/Column would swallow the gesture and refresh would never trigger.
 @Composable
 private fun CenteredMessage(message: String, isError: Boolean = false) {
-    Box(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item {
+            Box(
+                modifier = Modifier.fillParentMaxSize().padding(32.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
     }
 }
 
 @Composable
 private fun EmptyState() {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Inbox,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.home_empty_title),
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.home_empty_body),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item {
+            Column(
+                modifier = Modifier.fillParentMaxSize().padding(32.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Inbox,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.home_empty_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.home_empty_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
     }
 }
 

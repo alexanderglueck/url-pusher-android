@@ -15,10 +15,11 @@ class DefaultUrlsRepository @Inject constructor(
     private val sessionStore: SessionStore,
 ) : UrlsRepository {
 
-    override suspend fun push(url: String): Result<Unit> = runCatching {
-        val deviceId = sessionStore.current().activeDeviceId
+    override suspend fun push(url: String, deviceId: String?): Result<Unit> = runCatching {
+        val target = deviceId
+            ?: sessionStore.current().activeDeviceId
             ?: error("no_device")
-        val response = api.pushUrl(UrlStoreRequest(url, deviceId))
+        val response = api.pushUrl(UrlStoreRequest(url, target))
         if (!response.isSuccessful) error("push_failed_${response.code()}")
     }
 
@@ -30,6 +31,7 @@ class DefaultUrlsRepository @Inject constructor(
                     id = dto.id,
                     url = dto.url,
                     title = dto.title?.takeIf { it.isNotBlank() },
+                    imageUrl = dto.image?.takeIf { it.isNotBlank() },
                     deviceName = dto.device?.name,
                     createdAt = dto.createdAt,
                 )
@@ -38,7 +40,7 @@ class DefaultUrlsRepository @Inject constructor(
         )
     }
 
-    override suspend fun delete(id: Long): Result<Unit> = runCatching {
+    override suspend fun delete(id: String): Result<Unit> = runCatching {
         val response = api.deleteUrl(id)
         if (!response.isSuccessful) error("delete_failed_${response.code()}")
     }

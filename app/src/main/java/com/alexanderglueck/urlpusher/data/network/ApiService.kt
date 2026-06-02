@@ -39,12 +39,12 @@ interface ApiService {
 
     @POST("devices/{device}/token")
     suspend fun attachToken(
-        @Path("device") deviceId: Long,
+        @Path("device") deviceId: String,
         @Body body: AttachTokenRequest,
     ): DataEnvelope<DeviceDto>
 
     @DELETE("devices/{device}/token")
-    suspend fun removeToken(@Path("device") deviceId: Long): Response<Unit>
+    suspend fun removeToken(@Path("device") deviceId: String): Response<Unit>
 
     @POST("devices/pair")
     suspend fun pair(@Body body: PairDeviceRequest): PairDeviceResponse
@@ -56,5 +56,5 @@ interface ApiService {
     suspend fun listUrls(@Query("cursor") cursor: String? = null): CursorPage<UrlDto>
 
     @DELETE("urls/{url}")
-    suspend fun deleteUrl(@Path("url") urlId: Long): Response<Unit>
+    suspend fun deleteUrl(@Path("url") urlId: String): Response<Unit>
 }

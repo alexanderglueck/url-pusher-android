@@ -5,10 +5,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UrlDto(
-    val id: Long,
+    val id: String,
     val url: String,
     val title: String? = null,
-    @SerialName("device_id") val deviceId: Long? = null,
+    val image: String? = null,
+    @SerialName("device_id") val deviceId: String? = null,
     val device: DeviceDto? = null,
     @SerialName("created_at") val createdAt: String? = null,
 )

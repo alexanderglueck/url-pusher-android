@@ -65,8 +65,18 @@
     <string name="home_row_more">More actions</string>
     <string name="home_action_share">Share</string>
     <string name="home_action_copy">Copy link</string>
+    <string name="home_action_send">Send to another device</string>
     <string name="home_action_delete">Delete</string>
     <string name="home_copied">Link copied</string>
+    <string name="home_fab_compose">Push a link</string>
+
+    <string name="compose_title">Push a link</string>
+    <string name="compose_resend_title">Send to another device</string>
+    <string name="compose_url_label">URL</string>
+    <string name="compose_send_to_label">Send to</string>
+    <string name="compose_no_devices">No push-capable devices found.</string>
+    <string name="compose_cancel">Cancel</string>
+    <string name="compose_send">Send</string>
 
     <string name="share_pushing">Pushing URL…</string>
     <string name="share_pushed">URL pushed</string>

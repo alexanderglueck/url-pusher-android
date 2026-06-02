@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class DeviceDto(
-    val id: Long,
+    val id: String,
     val name: String,
     @SerialName("can_push") val canPush: Boolean,
     @SerialName("created_at") val createdAt: String,

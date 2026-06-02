@@ -4,7 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -24,14 +26,31 @@ private val HOME_ROUTES = setOf(Routes.HOME)
 @Composable
 fun UrlPusherNavHost(
     navController: NavHostController,
+    sessionViewModel: SessionViewModel,
     sharedUrl: String?,
     onSharedUrlConsumed: () -> Unit,
 ) {
-    val sessionViewModel: SessionViewModel = hiltViewModel()
     val session by sessionViewModel.state.collectAsState()
 
+    // Lock in the start destination only after the persisted session resolves.
+    // The system splash (set up in MainActivity) stays on top until then, so the
+    // user never sees the welcome/sign-in screen flash for one frame on launch.
+    var startDestination by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(session) {
-        val current = navController.currentDestination?.route
+        if (startDestination == null) {
+            startDestination = when (session) {
+                SessionState.Loading -> null
+                SessionState.SignedOut -> Routes.WELCOME
+                SessionState.NeedsDevice -> Routes.DEVICE_PICKER
+                SessionState.Ready -> Routes.HOME
+            }
+        }
+    }
+    val resolved = startDestination ?: return
+
+    // React to subsequent session changes (sign in/out, device pairing).
+    LaunchedEffect(session) {
+        val current = navController.currentDestination?.route ?: return@LaunchedEffect
         val (allowed, fallback) = when (session) {
             SessionState.Loading -> return@LaunchedEffect
             SessionState.SignedOut -> AUTH_ROUTES to Routes.WELCOME
@@ -48,7 +67,7 @@ fun UrlPusherNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = Routes.WELCOME,
+        startDestination = resolved,
     ) {
         composable(Routes.WELCOME) {
             WelcomeScreen(

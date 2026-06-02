@@ -16,7 +16,7 @@ data class DevicePickerUiState(
     val loading: Boolean = true,
     val devices: List<Device> = emptyList(),
     val error: String? = null,
-    val selecting: Long? = null,
+    val selecting: String? = null,
 )
 
 @HiltViewModel

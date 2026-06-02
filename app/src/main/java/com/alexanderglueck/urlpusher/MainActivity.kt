@@ -9,18 +9,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
+import com.alexanderglueck.urlpusher.ui.SessionState
+import com.alexanderglueck.urlpusher.ui.SessionViewModel
 import com.alexanderglueck.urlpusher.ui.navigation.UrlPusherNavHost
 import com.alexanderglueck.urlpusher.ui.theme.UrlPusherTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -28,10 +28,20 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    private val sessionViewModel: SessionViewModel by viewModels()
+
+    // Holds the URL shared into the app. Because the activity is singleTask, a
+    // share while the app is already running arrives via onNewIntent (not a fresh
+    // onCreate), so this state is updated from both paths and read in setContent.
+    private val sharedUrl = mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splash = installSplashScreen()
+        splash.setKeepOnScreenCondition {
+            sessionViewModel.state.value == SessionState.Loading
+        }
         super.onCreate(savedInstanceState)
-        val initialShare = intent?.extractSharedUrl()
+        intent?.extractSharedUrl()?.let { sharedUrl.value = it }
 
         setContent {
             UrlPusherTheme {
@@ -39,12 +49,12 @@ class MainActivity : ComponentActivity() {
                     NotificationPermissionGate()
 
                     val navController = rememberNavController()
-                    var sharedUrl by remember { mutableStateOf(initialShare) }
 
                     UrlPusherNavHost(
                         navController = navController,
-                        sharedUrl = sharedUrl,
-                        onSharedUrlConsumed = { sharedUrl = null },
+                        sessionViewModel = sessionViewModel,
+                        sharedUrl = sharedUrl.value,
+                        onSharedUrlConsumed = { sharedUrl.value = null },
                     )
                 }
             }
@@ -54,12 +64,17 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        intent.extractSharedUrl()?.let { sharedUrl.value = it }
     }
 
     private fun Intent.extractSharedUrl(): String? {
         if (action != Intent.ACTION_SEND || type != "text/plain") return null
-        val text = getStringExtra(Intent.EXTRA_TEXT)?.trim() ?: return null
-        return text.takeIf { Patterns.WEB_URL.matcher(it).matches() }
+        val text = getStringExtra(Intent.EXTRA_TEXT)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        // The payload may be a bare URL or a title followed by a URL (common from
+        // browsers), so fall back to extracting the first URL found within the text.
+        if (Patterns.WEB_URL.matcher(text).matches()) return text
+        val matcher = Patterns.WEB_URL.matcher(text)
+        return if (matcher.find()) text.substring(matcher.start(), matcher.end()) else null
     }
 }
 
